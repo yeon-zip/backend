@@ -1,0 +1,27 @@
+services:
+  polestar-mariadb:
+    env_file:
+      - .env.local
+    image: mariadb:lts
+    ports:
+      - "22936:3306"
+    container_name: polestar-mariadb
+    environment:
+      TZ: Asia/Seoul
+      MARIADB_USER: ${DATASOURCE_ID}
+      MARIADB_PASSWORD: ${DATASOURCE_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DATASOURCE_PASSWORD}
+      MARIADB_DATABASE: local
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-name-resolve=ON
+      - --innodb-file-per-table=1
+    volumes:
+      - ./container/mariadb/conf.d/server.conf:/etc/mysql/conf.d/server.conf:ro
+      - ./container/mariadb/conf.d/client.conf:/etc/mysql/conf.d/client.conf:ro
+      - polestar-mariadb_data:/var/lib/mysql
+      - ./container/mariadb/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+volumes:
+  polestar-mariadb_data:

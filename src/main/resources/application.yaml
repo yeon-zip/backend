@@ -1,0 +1,56 @@
+server:
+  port: 8080
+  tomcat:
+    max-part-count: 500
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 2KB
+
+spring:
+  application:
+    name: polestar
+  profiles:
+    group:
+      prod: prod
+      dev: dev
+      local: local
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 200MB
+  web:
+    error:
+      whitelabel:
+        enabled: false
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+    open-in-view: false
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
+management:
+  server:
+    port: 9090
+
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+
+---
+
+spring:
+  profiles:
+    active: local
