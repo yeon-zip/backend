@@ -1,7 +1,11 @@
-package kr.ac.kumoh.polestar.global.response
+package kr.ac.kumoh.polestar.global.exception
 
 import jakarta.persistence.EntityNotFoundException
-import org.springframework.http.*
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
+import org.springframework.http.ProblemDetail
+import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -69,23 +73,21 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             .body(problemDetail)
     }
 
-    @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
-    fun handleBadRequestException(ex: IllegalArgumentException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(ServiceException::class)
+    fun handleServiceException(ex: ServiceException): ResponseEntity<ProblemDetail> {
         logger.error("message", ex)
 
-        val httpStatus = HttpStatus.BAD_REQUEST
-
-        val problemDetail = ProblemDetail.forStatus(httpStatus).apply {
-            title = httpStatus.reasonPhrase
+        val problemDetail = ProblemDetail.forStatus(ex.errorCode.httpStatus).apply {
+            title = ex.errorCode.httpStatus.reasonPhrase
             detail = ex.message
         }
 
-        return ResponseEntity.status(httpStatus)
+        return ResponseEntity.status(ex.errorCode.httpStatus)
             .body(problemDetail)
     }
 
-    @ExceptionHandler(NoSuchElementException::class, EntityNotFoundException::class)
-    fun handleNotFoundException(ex: NoSuchElementException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(EntityNotFoundException::class)
+    fun handleNotFoundException(ex: EntityNotFoundException): ResponseEntity<ProblemDetail> {
         logger.error("message", ex)
 
         val httpStatus = HttpStatus.NOT_FOUND
