@@ -28,11 +28,15 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 100
+        jdbc:
+          time_zone: Asia/Seoul
     open-in-view: false
   data:
     web:
       pageable:
         one-indexed-parameters: true
+  jackson:
+    time-zone: Asia/Seoul
 
 management:
   server:

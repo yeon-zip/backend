@@ -4,7 +4,7 @@ spring:
       on-profile: local
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: 'jdbc:mariadb://localhost:22936/local?serverTimezone=Asia/Seoul'
+    url: jdbc:mariadb://localhost:22936/local
     username: ${DATASOURCE_ID}
     password: ${DATASOURCE_PASSWORD}
   jpa:
@@ -13,6 +13,12 @@ spring:
         format_sql: true
         hbm2ddl.auto: update
     show-sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+    kr.ac.kumoh.polestar: debug
 
 core:
   cors:
@@ -24,3 +30,15 @@ core:
     exposed-headers: [ ]
     allow-credentials: true
     max-age: 3600
+  openapi:
+    data4library:
+      base-url: "http://data4library.kr"
+      auth-key: ${DATA4LIBRARY_AUTH_KEY}
+    naver:
+      search:
+        base-url: "https://openapi.naver.com"
+        client-id: ${NAVER_BOOK_SEARCH_CLIENT_ID}
+        client-secret: ${NAVER_BOOK_SEARCH_CLIENT_SECRET}
+    national-library:
+      base-url: "https://www.nl.go.kr"
+      api-key: ${NATIONAL_LIBRARY_API_KEY}
