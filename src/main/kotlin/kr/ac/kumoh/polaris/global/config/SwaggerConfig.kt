@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration
     ),
     servers = [
         Server(
-            url = "https://api.k-polaris.life",
+            url = "https://k-polaris.life",
             description = "Polaris API 서버"
         )
     ]
