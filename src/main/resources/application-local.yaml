@@ -18,19 +18,20 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
-    kr.ac.kumoh.polestar: debug
+    kr.ac.kumoh.polaris: debug
 
 springdoc:
   trim-kotlin-indent: true
-  packagesToScan: kr.ac.kumoh.polestar
+  packagesToScan: kr.ac.kumoh.polaris
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
-    disable-swagger-default-url: true
+    enabled: false
     operations-sorter: alpha
     display-request-duration: true
     tags-sorter: alpha
   api-docs:
+    enabled: true
     groups:
       enabled: false
 

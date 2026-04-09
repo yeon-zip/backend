@@ -10,7 +10,7 @@ server:
 
 spring:
   application:
-    name: polestar
+    name: polaris
   profiles:
     group:
       prod: prod
