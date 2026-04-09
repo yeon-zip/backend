@@ -46,7 +46,6 @@ dependencies {
     runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
 
     // Development
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     // Test
@@ -58,7 +57,7 @@ dependencies {
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    // Swagger UI 및 OpenAPI 자동화 라이브러리
+    // Swagger UI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 }
 
