@@ -18,7 +18,7 @@ data class BookResponse(
     @Schema(description = "출판일입니다.", example = "20230714", nullable = false)
     val publicationDate: LocalDate?,
     @Schema(description = "도서 표지 URL입니다.", example = "https://nl.go.kr/seoji/fu/ecip/dbfiles/CIP_FILES_TBL/2023/06/9791198363510.jpg", nullable = false)
-    val coverImageUrl: String?
+    val coverImageUrl: String?,
 ) {
     companion object {
         fun from(result: BookResult): BookResponse =

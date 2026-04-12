@@ -20,7 +20,7 @@ class BookHoldingFinder(
         loanAvailable: Boolean?
     ): List<NearbyLibraryBookAvailability> {
         if (radiusKm <= 0) {
-            throw ServiceException(ErrorCode.INVALID_RADIUS_KM)
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
 
         val nearbyLibraries = nearbyLibraryQueryRepository.findWithinRadius(
