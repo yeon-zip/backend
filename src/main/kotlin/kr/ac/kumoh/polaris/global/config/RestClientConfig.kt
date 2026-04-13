@@ -1,7 +1,6 @@
 package kr.ac.kumoh.polaris.global.config
 
 import kr.ac.kumoh.polaris.global.properties.Data4LibraryApiProperties
-import kr.ac.kumoh.polaris.global.properties.NationalLibraryApiProperties
 import kr.ac.kumoh.polaris.global.properties.NaverSearchApiProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -34,20 +33,20 @@ class RestClientConfig {
             .build()
 
     @Bean
-    fun naverSearchRestClient(
+    fun naverSearchListRestClient(
         builder: RestClient.Builder,
         properties: NaverSearchApiProperties
     ): RestClient =
         builder
-            .baseUrl(properties.baseUrl)
+            .baseUrl(properties.list.baseUrl)
             .build()
 
     @Bean
-    fun nationalLibraryRestClient(
+    fun naverSearchDetailRestClient(
         builder: RestClient.Builder,
-        properties: NationalLibraryApiProperties
+        properties: NaverSearchApiProperties
     ): RestClient =
         builder
-            .baseUrl(properties.baseUrl)
+            .baseUrl(properties.detail.baseUrl)
             .build()
 }

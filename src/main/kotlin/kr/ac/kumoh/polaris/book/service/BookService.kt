@@ -17,6 +17,7 @@ class BookService(
 ) {
     fun getBook(isbn: String): BookResult {
         val normalizedIsbn = IsbnNormalizer.normalize(isbn)
+
         val book = bookReader.findByIsbn(normalizedIsbn)
             ?: bookMetadataLoader.loadByIsbn(normalizedIsbn)
                 ?.let(bookWriter::saveIfAbsent)

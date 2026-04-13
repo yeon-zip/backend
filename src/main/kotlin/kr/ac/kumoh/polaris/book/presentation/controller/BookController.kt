@@ -54,8 +54,7 @@ class BookController(
         val result = bookSearchService.searchBooks(
             query = query,
             cursor = cursor,
-            limit = limit,
-            sort = "sim"
+            limit = limit
         )
 
         return ResponseEntity.ok(

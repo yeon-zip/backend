@@ -12,13 +12,11 @@ class BookSearchService(
     fun searchBooks(
         query: String,
         cursor: String?,
-        limit: Int,
-        sort: String
+        limit: Int
     ): CursorPageResult<BookSearchItemResult> =
         bookSearchReader.searchBooks(
             query = query,
             cursor = cursor,
-            limit = limit,
-            sort = sort
+            limit = limit
         )
 }

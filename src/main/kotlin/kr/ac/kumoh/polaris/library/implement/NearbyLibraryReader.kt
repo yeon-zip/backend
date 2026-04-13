@@ -95,10 +95,10 @@ class NearbyLibraryReader(
             throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
         if (radiusKm <= 0) {
-            throw ServiceException(ErrorCode.INVALID_RADIUS_KM)
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
         if (limit !in 1..100) {
-            throw ServiceException(ErrorCode.INVALID_LIMIT)
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
     }
 
@@ -108,13 +108,13 @@ class NearbyLibraryReader(
     private fun parseCursor(rawCursor: String): NearbyLibraryCursor {
         val parts = rawCursor.split(":")
         if (parts.size != 2) {
-            throw ServiceException(ErrorCode.INVALID_CURSOR)
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
 
         val distanceMeter = parts[0].toLongOrNull()
-            ?: throw ServiceException(ErrorCode.INVALID_CURSOR)
+            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         val libraryId = parts[1].toLongOrNull()
-            ?: throw ServiceException(ErrorCode.INVALID_CURSOR)
+            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
 
         return NearbyLibraryCursor(
             distanceMeter = distanceMeter,

@@ -75,7 +75,7 @@ class BookAvailabilityService(
 
     private fun validateRequest(limit: Int) {
         if (limit !in 1..100) {
-            throw ServiceException(ErrorCode.INVALID_LIMIT)
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
     }
 
@@ -171,13 +171,13 @@ class BookAvailabilityService(
     private fun parseCursor(rawCursor: String): BookHoldingCursor {
         val parts = rawCursor.split(":")
         if (parts.size != 2) {
-            throw ServiceException(ErrorCode.INVALID_CURSOR)
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
 
         val distanceKm = parts[0].toDoubleOrNull()
-            ?: throw ServiceException(ErrorCode.INVALID_CURSOR)
+            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         val libraryId = parts[1].toLongOrNull()
-            ?: throw ServiceException(ErrorCode.INVALID_CURSOR)
+            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
 
         return BookHoldingCursor(
             distanceKm = distanceKm,

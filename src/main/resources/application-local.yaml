@@ -51,9 +51,11 @@ core:
       auth-key: ${DATA4LIBRARY_AUTH_KEY}
     naver:
       search:
-        base-url: "https://openapi.naver.com"
-        client-id: ${NAVER_BOOK_SEARCH_CLIENT_ID}
-        client-secret: ${NAVER_BOOK_SEARCH_CLIENT_SECRET}
-    national-library:
-      base-url: "https://www.nl.go.kr"
-      api-key: ${NATIONAL_LIBRARY_API_KEY}
+        list:
+          base-url: "https://openapi.naver.com//v1/search/book.json"
+          client-id: ${NAVER_BOOK_SEARCH_LIST_CLIENT_ID}
+          client-secret: ${NAVER_BOOK_SEARCH_LIST_CLIENT_SECRET}
+        detail:
+          base-url: "https://openapi.naver.com/v1/search/book_adv.json"
+          client-id: ${NAVER_BOOK_SEARCH_DETAIL_CLIENT_ID}
+          client-secret: ${NAVER_BOOK_SEARCH_DETAIL_CLIENT_SECRET}
