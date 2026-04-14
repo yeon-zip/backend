@@ -6,8 +6,6 @@ import kr.ac.kumoh.polaris.library.entity.LibraryOperatingHour
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.temporal.WeekFields
-import java.util.Locale
 
 @Component
 class LibraryAvailabilityChecker {
@@ -36,7 +34,7 @@ class LibraryAvailabilityChecker {
         rules: List<LibraryClosedRule>
     ): Boolean {
         val weekday = date.dayOfWeek.value
-        val nthWeek = date.weekOfMonth()
+        val nthWeek = date.nthWeekdayInMonth()
         val monthDay = date.dayOfMonth
 
         return rules.any { rule ->
@@ -49,6 +47,6 @@ class LibraryAvailabilityChecker {
         }
     }
 
-    private fun LocalDate.weekOfMonth(): Int =
-        get(WeekFields.of(Locale.KOREA).weekOfMonth())
+    private fun LocalDate.nthWeekdayInMonth(): Int =
+        ((dayOfMonth - 1) / 7) + 1
 }
