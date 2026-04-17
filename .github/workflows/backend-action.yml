@@ -45,7 +45,7 @@ jobs:
           proxy_username: ${{ secrets.WEB_USER }}
           proxy_password: ${{ secrets.WEB_PASSWORD }}
           source: "build/libs/polaris-0.0.1-SNAPSHOT.jar"
-          target: "~/"
+          target: "~/polaris-jar"
           strip_components: 2
 
       # 6. Web 서버를 거쳐 WAS 서버에 원격 접속 후 배포 명령어 실행
@@ -61,7 +61,7 @@ jobs:
           proxy_username: ${{ secrets.WEB_USER }}
           proxy_password: ${{ secrets.WEB_PASSWORD }}
           script: |
-            cd ~/
+            cd ~/polaris-jar
 
             # 환경변수 파일이 있다면 적용 (.env.local)
             if [ -f .env.local ]; then
