@@ -68,10 +68,16 @@ jobs:
               export $(cat .env.local | xargs)
             fi
 
-            # 기존에 돌고 있던 프로세스 종료
+            # 1. 자폭 방지 로직 적용: 정확히 java 프로세스만 찾아서 종료
             echo "Kill existing process..."
-            kill -9 $(pgrep -f polaris-0.0.1-SNAPSHOT.jar) || true
+            PID=$(ps -ef | grep 'java -jar polaris-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
+            if [ -n "$PID" ]; then
+              echo "Killed process $PID"
+              kill -9 $PID
+            else
+              echo "No process running."
+            fi
 
-            # 백그라운드 무중단 실행 (dev 프로파일 적용)
+            # 2. 백그라운드 무중단 실행 (SSH 세션 끊김 방지용 < /dev/null 추가)
             echo "Start new server..."
-            nohup java -jar polaris-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev > app.log 2>&1 &
+            nohup java -jar polaris-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev > app.log 2>&1 < /dev/null &
