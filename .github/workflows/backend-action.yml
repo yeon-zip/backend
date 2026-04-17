@@ -2,7 +2,7 @@ name: backend-action.yml
 # main 브랜치에 코드가 push 되면 실행
 on:
   push:
-    branches: [ "test-cicd" ]
+    branches: [ "main" ]
 
 jobs:
   build-and-deploy:
