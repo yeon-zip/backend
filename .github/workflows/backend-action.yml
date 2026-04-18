@@ -1,0 +1,83 @@
+name: backend-action.yml
+# main 브랜치에 코드가 push 되면 실행
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. GitHub 저장소 코드 가져오기
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. GitHub 로봇을 Tailscale 네트워크에 로그인시키기 (마법의 입장권!)
+      - name: Tailscale Login
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      # 3. 가상 서버에 Java 24 세팅하기
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+
+      # 4. Gradle로 Spring Boot 프로젝트 빌드 (jar 파일 생성)
+      - name: Build with Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew clean bootJar
+
+      # 5. 완성된 jar 파일을 Web 서버(Jump)를 거쳐 WAS 서버로 전송
+      - name: Transfer jar to WAS Server via Jump Host
+        uses: appleboy/scp-action@master
+        with:
+          # 최종 목적지 (WAS 서버)
+          host: ${{ secrets.WAS_IP }}
+          username: ${{ secrets.WAS_USER }}
+          password: ${{ secrets.WAS_PASSWORD }}
+          # 거쳐갈 경유지 (Web 서버의 Tailscale 주소)
+          proxy_host: ${{ secrets.WEB_IP }}
+          proxy_username: ${{ secrets.WEB_USER }}
+          proxy_password: ${{ secrets.WEB_PASSWORD }}
+          source: "build/libs/polaris-0.0.1-SNAPSHOT.jar"
+          target: "~/polaris-jar"
+          strip_components: 2
+
+      # 6. Web 서버를 거쳐 WAS 서버에 원격 접속 후 배포 명령어 실행
+      - name: Execute Server on WAS via Jump Host
+        uses: appleboy/ssh-action@master
+        with:
+          # 최종 목적지 (WAS 서버)
+          host: ${{ secrets.WAS_IP }}
+          username: ${{ secrets.WAS_USER }}
+          password: ${{ secrets.WAS_PASSWORD }}
+          # 거쳐갈 경유지 (Web 서버의 Tailscale 주소)
+          proxy_host: ${{ secrets.WEB_IP }}
+          proxy_username: ${{ secrets.WEB_USER }}
+          proxy_password: ${{ secrets.WEB_PASSWORD }}
+          script: |
+            cd ~/polaris-jar
+
+            # 환경변수 파일이 있다면 적용 (.env.local)
+            if [ -f .env.local ]; then
+              export $(cat .env.local | xargs)
+            fi
+
+            # 1. 자폭 방지 로직 적용: 정확히 java 프로세스만 찾아서 종료
+            echo "Kill existing process..."
+            PID=$(ps -ef | grep 'java -jar polaris-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
+            if [ -n "$PID" ]; then
+              echo "Killed process $PID"
+              kill -9 $PID
+            else
+              echo "No process running."
+            fi
+
+            # 2. 백그라운드 무중단 실행 (SSH 세션 끊김 방지용 < /dev/null 추가)
+            echo "Start new server..."
+            nohup java -jar polaris-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev > app.log 2>&1 < /dev/null &
