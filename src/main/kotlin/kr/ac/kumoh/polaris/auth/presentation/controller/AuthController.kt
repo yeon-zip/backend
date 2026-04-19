@@ -4,9 +4,12 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletResponse
+import jakarta.validation.Valid
+import kr.ac.kumoh.polaris.auth.presentation.request.ExchangeCodeRequest
 import kr.ac.kumoh.polaris.auth.presentation.response.AuthTokenResponse
 import kr.ac.kumoh.polaris.auth.principal.AuthenticatedUser
 import kr.ac.kumoh.polaris.auth.service.AuthTokenService
+import kr.ac.kumoh.polaris.auth.service.LoginExchangeCodeService
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -22,7 +25,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val loginExchangeCodeService: LoginExchangeCodeService
 ) {
     @Operation(summary = "Kakao OIDC 로그인 진입점")
     @GetMapping("/kakao/login")
@@ -35,6 +39,18 @@ class AuthController(
     fun refresh(
         @RequestHeader(HttpHeaders.AUTHORIZATION) authorizationHeader: String
     ): ResponseEntity<AuthTokenResponse> = ResponseEntity.ok(authTokenService.refresh(authorizationHeader))
+
+    @Operation(summary = "앱 로그인 교환 코드로 토큰 발급")
+    @PostMapping("/exchange")
+    fun exchange(
+        @Valid @org.springframework.web.bind.annotation.RequestBody request: ExchangeCodeRequest
+    ): ResponseEntity<AuthTokenResponse> = ResponseEntity.ok(
+        loginExchangeCodeService.redeem(
+            code = request.code,
+            targetId = request.targetId,
+            codeVerifier = request.codeVerifier
+        )
+    )
 
     @Operation(
         summary = "로그아웃 또는 토큰 무효화",

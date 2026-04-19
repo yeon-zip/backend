@@ -23,6 +23,7 @@ class JwtAuthenticationFilter(
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI
         return path == "/api/v1/auth/refresh" ||
+            path == "/api/v1/auth/exchange" ||
             path.startsWith("/oauth2/") ||
             path.startsWith("/login/oauth2/")
     }
@@ -57,6 +58,7 @@ class JwtAuthenticationFilter(
             val problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED).apply {
                 title = HttpStatus.UNAUTHORIZED.reasonPhrase
                 detail = exception.message
+                setProperty("errorCode", exception.errorCode.name)
             }
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             response.contentType = MediaType.APPLICATION_PROBLEM_JSON_VALUE

@@ -2,127 +2,161 @@ package kr.ac.kumoh.polaris.auth.service
 
 import kr.ac.kumoh.polaris.auth.config.AuthAppLoginProperties
 import kr.ac.kumoh.polaris.auth.entity.LoginExchangeCode
-import kr.ac.kumoh.polaris.auth.entity.LoginExchangeIssuanceStatus
-import kr.ac.kumoh.polaris.auth.presentation.request.ExchangeCodeRequest
+import kr.ac.kumoh.polaris.auth.entity.LoginExchangeCodeStatus
 import kr.ac.kumoh.polaris.auth.presentation.response.AuthTokenResponse
 import kr.ac.kumoh.polaris.auth.repository.LoginExchangeCodeRepository
 import kr.ac.kumoh.polaris.global.exception.ErrorCode
 import kr.ac.kumoh.polaris.global.exception.ServiceException
 import kr.ac.kumoh.polaris.user.entity.User
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.util.Base64
 
 @Service
 class LoginExchangeCodeService(
-    private val loginExchangeCodeRepository: LoginExchangeCodeRepository,
     private val authAppLoginProperties: AuthAppLoginProperties,
-    private val authTokenService: AuthTokenService
+    private val loginExchangeCodeRepository: LoginExchangeCodeRepository,
+    private val authTokenService: AuthTokenService,
+    private val transactionTemplate: TransactionTemplate
 ) {
-    @Transactional
-    fun issueAppExchangeCode(
+    fun issueExchangeCode(
         user: User,
         targetId: String,
         codeChallenge: String?,
-        correlationId: String
+        correlationId: String? = null
     ): String {
-        val exchangeCode = generateOpaqueExchangeCode()
-        loginExchangeCodeRepository.save(
-            LoginExchangeCode(
-                codeHash = sha256(exchangeCode),
-                targetId = targetId,
-                codeChallengeHash = codeChallenge?.let(::sha256),
-                expiresAt = LocalDateTime.now().plusSeconds(authAppLoginProperties.exchangeCodeTtlSeconds),
-                correlationId = correlationId,
-                user = user
-            )
+        validateTarget(targetId)
+        validateCodeChallenge(codeChallenge)
+
+        val rawCode = generateExchangeCode()
+        val exchangeCode = LoginExchangeCode(
+            codeHash = sha256Hex(rawCode),
+            targetId = targetId,
+            user = user,
+            expiresAt = LocalDateTime.now().plus(authAppLoginProperties.app.exchange.ttl),
+            codeChallengeHash = codeChallenge?.let(::sha256Hex),
+            correlationId = correlationId
         )
-        return exchangeCode
+        loginExchangeCodeRepository.save(exchangeCode)
+        return rawCode
     }
 
-    @Transactional(noRollbackFor = [ServiceException::class])
-    fun exchange(request: ExchangeCodeRequest): AuthTokenResponse {
-        val now = LocalDateTime.now()
-        val exchangeCode = loginExchangeCodeRepository.findByCodeHashForUpdate(sha256(request.code.trim()))
-            ?: throw ServiceException(
-                ErrorCode.OIDC_INVALID_EXCHANGE_CODE,
-                "유효하지 않은 교환 코드입니다."
-            )
+    fun redeem(
+        code: String,
+        targetId: String,
+        codeVerifier: String?
+    ): AuthTokenResponse {
+        validateTarget(targetId)
 
-        when (exchangeCode.issuanceStatus) {
-            LoginExchangeIssuanceStatus.ISSUED -> throw ServiceException(
-                ErrorCode.OIDC_EXCHANGE_CODE_ALREADY_CONSUMED,
-                "이미 사용된 교환 코드입니다."
-            )
-            LoginExchangeIssuanceStatus.FAILED_TERMINAL -> throw ServiceException(
-                ErrorCode.OIDC_EXCHANGE_TERMINAL_FAILURE,
-                "더 이상 사용할 수 없는 교환 코드입니다."
-            )
-            LoginExchangeIssuanceStatus.PENDING -> Unit
+        val result = transactionTemplate.execute {
+            val exchangeCode = loginExchangeCodeRepository.findByCodeHash(sha256Hex(code))
+                ?: return@execute RedemptionResult.Failure(ServiceException(ErrorCode.OIDC_EXCHANGE_CODE_INVALID))
+
+            validateExchangeCode(exchangeCode, targetId, codeVerifier)
+
+            try {
+                val issuedTokens = authTokenService.issueTokensWithRefreshToken(exchangeCode.user)
+                val refreshTokenId = issuedTokens.refreshTokenId
+                    ?: throw ServiceException(ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE)
+                exchangeCode.markIssued(refreshTokenId)
+                RedemptionResult.Success(issuedTokens.response)
+            } catch (exception: RuntimeException) {
+                exchangeCode.markFailedTerminal(exception.message ?: ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE.name)
+                RedemptionResult.Failure(asIssuanceFailure(exception))
+            }
+        } ?: throw ServiceException(ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE)
+
+        return when (result) {
+            is RedemptionResult.Success -> result.response
+            is RedemptionResult.Failure -> throw result.exception
         }
-
-        if (exchangeCode.isExpired(now)) {
-            return failTerminal(exchangeCode, now, ErrorCode.OIDC_EXCHANGE_CODE_EXPIRED, "EXPIRED")
-        }
-
-        if (exchangeCode.targetId != request.targetId.trim()) {
-            return failTerminal(exchangeCode, now, ErrorCode.OIDC_INVALID_TARGET, "TARGET_MISMATCH")
-        }
-
-        validateProofBinding(exchangeCode, request.codeVerifier, now)
-
-        val issuedTokens = authTokenService.issueTokensWithRefreshToken(exchangeCode.user)
-        exchangeCode.markIssued(now, issuedTokens.refreshToken.id)
-        return issuedTokens.response
     }
 
-    private fun validateProofBinding(
+    private fun validateExchangeCode(
         exchangeCode: LoginExchangeCode,
-        codeVerifierValue: String?,
-        now: LocalDateTime
+        targetId: String,
+        codeVerifier: String?
     ) {
-        val storedChallengeHash = exchangeCode.codeChallengeHash ?: return
-        val codeVerifier = codeVerifierValue?.trim()?.takeIf { it.isNotEmpty() }
-            ?: failTerminal(exchangeCode, now, ErrorCode.OIDC_PROOF_REQUIRED, "PROOF_REQUIRED")
+        if (exchangeCode.issuanceStatus == LoginExchangeCodeStatus.ISSUED) {
+            throw ServiceException(ErrorCode.OIDC_EXCHANGE_CODE_ALREADY_CONSUMED)
+        }
+        if (exchangeCode.issuanceStatus == LoginExchangeCodeStatus.FAILED_TERMINAL) {
+            throw ServiceException(ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE)
+        }
+        if (exchangeCode.isExpired()) {
+            throw ServiceException(ErrorCode.OIDC_EXCHANGE_CODE_EXPIRED)
+        }
+        if (exchangeCode.targetId != targetId) {
+            throw ServiceException(ErrorCode.OIDC_EXCHANGE_CODE_INVALID)
+        }
 
+        val storedChallengeHash = exchangeCode.codeChallengeHash
+        if (storedChallengeHash == null) {
+            return
+        }
+
+        val normalizedVerifier = codeVerifier?.trim().takeUnless { it.isNullOrEmpty() }
+            ?: throw ServiceException(ErrorCode.OIDC_PROOF_REQUIRED)
+        validateCodeVerifier(normalizedVerifier)
+        val derivedChallenge = pkceS256(normalizedVerifier)
+        if (sha256Hex(derivedChallenge) != storedChallengeHash) {
+            throw ServiceException(ErrorCode.OIDC_PROOF_MISMATCH)
+        }
+    }
+
+    private fun validateTarget(targetId: String) {
+        if (authAppLoginProperties.resolveTarget(targetId).isNullOrBlank()) {
+            throw ServiceException(ErrorCode.OIDC_TARGET_NOT_ALLOWED)
+        }
+    }
+
+    private fun validateCodeChallenge(codeChallenge: String?) {
+        if (codeChallenge.isNullOrBlank() && !authAppLoginProperties.app.exchange.allowWithoutProof) {
+            throw ServiceException(ErrorCode.OIDC_PROOF_REQUIRED)
+        }
+    }
+
+    private fun validateCodeVerifier(codeVerifier: String) {
         if (!CODE_VERIFIER_PATTERN.matches(codeVerifier)) {
-            failTerminal(exchangeCode, now, ErrorCode.OIDC_INVALID_CODE_VERIFIER, "INVALID_CODE_VERIFIER")
-        }
-
-        val derivedChallenge = Base64.getUrlEncoder()
-            .withoutPadding()
-            .encodeToString(MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray(StandardCharsets.US_ASCII)))
-
-        if (sha256(derivedChallenge) != storedChallengeHash) {
-            failTerminal(exchangeCode, now, ErrorCode.OIDC_PROOF_MISMATCH, "PROOF_MISMATCH")
+            throw ServiceException(ErrorCode.OIDC_INVALID_CODE_VERIFIER)
         }
     }
 
-    private fun failTerminal(
-        exchangeCode: LoginExchangeCode,
-        now: LocalDateTime,
-        errorCode: ErrorCode,
-        reason: String
-    ): Nothing {
-        exchangeCode.markFailed(now, reason)
-        throw ServiceException(errorCode, errorCode.message)
+    private fun asIssuanceFailure(exception: RuntimeException): RuntimeException = when (exception) {
+        is ServiceException -> ServiceException(
+            ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE,
+            exception.message
+        )
+        else -> ServiceException(ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE)
     }
 
-    private fun generateOpaqueExchangeCode(): String {
+    private fun generateExchangeCode(): String {
         val bytes = ByteArray(32)
-        SECURE_RANDOM.nextBytes(bytes)
+        secureRandom.nextBytes(bytes)
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 
-    private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
-        .digest(value.toByteArray(StandardCharsets.UTF_8))
-        .joinToString("") { "%02x".format(it) }
+    private fun pkceS256(codeVerifier: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashed = digest.digest(codeVerifier.toByteArray(StandardCharsets.US_ASCII))
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(hashed)
+    }
+
+    private fun sha256Hex(value: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(value.toByteArray(StandardCharsets.US_ASCII))
+        .joinToString(separator = "") { "%02x".format(it) }
+
+    private sealed interface RedemptionResult {
+        data class Success(val response: AuthTokenResponse) : RedemptionResult
+        data class Failure(val exception: RuntimeException) : RedemptionResult
+    }
 
     companion object {
-        private val SECURE_RANDOM = java.security.SecureRandom()
-        private val CODE_VERIFIER_PATTERN = Regex("^[A-Za-z0-9._~-]{43,128}$")
+        private val secureRandom = SecureRandom()
+        private val CODE_VERIFIER_PATTERN = Regex("^[A-Za-z0-9\\-._~]{43,128}$")
     }
 }

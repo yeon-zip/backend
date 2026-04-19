@@ -10,7 +10,6 @@ import kr.ac.kumoh.polaris.user.entity.User
 import kr.ac.kumoh.polaris.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -19,12 +18,14 @@ class AuthTokenService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userRepository: UserRepository
 ) {
-    fun issueTokens(user: User): AuthTokenResponse {
+    fun issueTokens(user: User): AuthTokenResponse = issueTokensWithRefreshToken(user).response
+
+    fun issueTokensWithRefreshToken(user: User): IssuedTokens {
         val accessToken = jwtTokenProvider.generateAccessToken(user)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user)
         val expiresAt = jwtTokenProvider.getExpiresAt(jwtTokenProvider.parseRefreshToken(refreshToken))
 
-        refreshTokenRepository.save(
+        val persistedRefreshToken = refreshTokenRepository.save(
             RefreshToken(
                 token = refreshToken,
                 expiresAt = expiresAt,
@@ -32,13 +33,14 @@ class AuthTokenService(
             )
         )
 
-        return AuthTokenResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            expiresIn = jwtTokenProvider.parseAccessToken(accessToken).expiresAt?.epochSecond
-                ?.minus(jwtTokenProvider.parseAccessToken(accessToken).issuedAt?.epochSecond ?: 0)
-                ?: 0,
-            userId = user.id ?: throw ServiceException(ErrorCode.USER_NOT_FOUND)
+        return IssuedTokens(
+            response = AuthTokenResponse(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                expiresIn = newAccessTokenDurationSeconds(accessToken),
+                userId = user.id ?: throw ServiceException(ErrorCode.USER_NOT_FOUND)
+            ),
+            refreshTokenId = persistedRefreshToken.id
         )
     }
 
@@ -93,6 +95,11 @@ class AuthTokenService(
 
         refreshTokenRepository.delete(persistedRefreshToken)
     }
+
+    data class IssuedTokens(
+        val response: AuthTokenResponse,
+        val refreshTokenId: Long?
+    )
 
     private fun newAccessTokenDurationSeconds(accessToken: String): Long {
         val jwt = jwtTokenProvider.parseAccessToken(accessToken)

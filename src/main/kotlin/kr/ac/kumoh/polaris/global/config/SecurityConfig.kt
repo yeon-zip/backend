@@ -55,6 +55,7 @@ class SecurityConfig(
             }
             authorizeHttpRequests {
                 authorize("/api/v1/auth/kakao/login", permitAll)
+                authorize("/api/v1/auth/exchange", permitAll)
                 authorize("/api/v1/auth/refresh", permitAll)
                 authorize("/oauth2/**", permitAll)
                 authorize("/login/oauth2/**", permitAll)
