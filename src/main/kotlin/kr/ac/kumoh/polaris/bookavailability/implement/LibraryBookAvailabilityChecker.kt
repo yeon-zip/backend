@@ -1,15 +1,18 @@
 package kr.ac.kumoh.polaris.bookavailability.implement
 
-import kr.ac.kumoh.polaris.bookavailability.implement.client.Data4LibraryBookExistClient
 import kr.ac.kumoh.polaris.bookavailability.implement.client.Data4LibraryBookExistResult
 import kr.ac.kumoh.polaris.bookavailability.implement.dto.LibraryBookAvailabilityResult
+import kr.ac.kumoh.polaris.global.properties.Data4LibraryApiProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 
 @Component
 class LibraryBookAvailabilityChecker(
-    private val data4LibraryBookExistClient: Data4LibraryBookExistClient
+    private val libraryBookAvailabilityReader: LibraryBookAvailabilityReader,
+    private val properties: Data4LibraryApiProperties
 ) {
     private val log = LoggerFactory.getLogger(this.javaClass)
 
@@ -19,7 +22,7 @@ class LibraryBookAvailabilityChecker(
     ): LibraryBookAvailabilityResult {
         log.info("도서 소장 여부 확인 시작 - libCode={}, isbn={}", libCode, isbn)
 
-        val result = data4LibraryBookExistClient.fetchBookExist(
+        val result = libraryBookAvailabilityReader.read(
             libCode = libCode,
             isbn = isbn
         )
@@ -45,15 +48,18 @@ class LibraryBookAvailabilityChecker(
         }
 
         val startedAt = System.nanoTime()
+        val concurrency = properties.bookExistConcurrency.coerceAtLeast(1)
         val results = Flux.fromIterable(distinctLibCodes)
             .flatMapSequential(
                 { libCode ->
-                    data4LibraryBookExistClient.fetchBookExistAsync(
-                        libCode = libCode,
-                        isbn = isbn
-                    )
+                    Mono.fromCallable {
+                        libraryBookAvailabilityReader.read(
+                            libCode = libCode,
+                            isbn = isbn
+                        )
+                    }.subscribeOn(Schedulers.boundedElastic())
                 },
-                BOOK_EXIST_CONCURRENCY
+                concurrency
             )
             .collectMap(
                 { result -> result.libCode },
@@ -67,7 +73,7 @@ class LibraryBookAvailabilityChecker(
             isbn,
             distinctLibCodes.size,
             results.size,
-            BOOK_EXIST_CONCURRENCY,
+            concurrency,
             elapsedMillis(startedAt)
         )
 
@@ -83,8 +89,4 @@ class LibraryBookAvailabilityChecker(
 
     private fun elapsedMillis(startedAt: Long): Long =
         (System.nanoTime() - startedAt) / 1_000_000
-
-    companion object {
-        private const val BOOK_EXIST_CONCURRENCY = 8
-    }
 }

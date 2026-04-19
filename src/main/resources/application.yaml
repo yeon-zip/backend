@@ -59,11 +59,13 @@ spring:
 management:
   server:
     port: 9090
+
   endpoints:
     web:
       base-path: /actuator
       exposure:
         include: health,info
+
   endpoint:
     health:
       show-details: never
@@ -83,6 +85,9 @@ core:
     data4library:
       base-url: "http://data4library.kr"
       auth-key: ${DATA4LIBRARY_AUTH_KEY:data4library-auth-key}
+      book-exist-concurrency: 4
+      book-exist-cache-duration: 30m
+      book-exist-cache-max-size: 1000
     naver:
       search:
         list:

@@ -1,6 +1,8 @@
 package kr.ac.kumoh.polaris.global.config
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import kr.ac.kumoh.polaris.bookavailability.implement.LibraryBookAvailabilityReader
+import kr.ac.kumoh.polaris.global.properties.Data4LibraryApiProperties
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCache
@@ -23,11 +25,16 @@ class CacheConfig {
         )
 
     @Bean
-    fun cacheManager(): CacheManager =
+    fun cacheManager(properties: Data4LibraryApiProperties): CacheManager =
         SimpleCacheManager().apply {
             setCaches(
                 setOf(
-                    buildCache("libraryBookAvailability", Duration.ofHours(12), true),
+                    buildCache(
+                        cacheName = LibraryBookAvailabilityReader.CACHE_NAME,
+                        duration = properties.bookExistCacheDuration,
+                        allowNullValue = false,
+                        maxSize = properties.bookExistCacheMaxSize
+                    ),
                 )
             )
         }
