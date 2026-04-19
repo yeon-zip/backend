@@ -1,9 +1,9 @@
-package kr.ac.kumoh.polestar
+package kr.ac.kumoh.polaris
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
+@SpringBootTest(classes = [PolarisApplication::class])
 class PolestarApplicationTests {
 
 	@Test

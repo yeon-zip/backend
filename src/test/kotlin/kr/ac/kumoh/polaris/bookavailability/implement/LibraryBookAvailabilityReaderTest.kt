@@ -13,7 +13,7 @@ class LibraryBookAvailabilityReaderTest {
     fun `reader caches by library code and isbn`() {
         val client = CountingData4LibraryBookExistClient()
         val reader = LibraryBookAvailabilityReader(
-            cacheManager = CacheConfig().cacheManager(),
+            cacheManager = configuredCacheManager(),
             data4LibraryBookExistClient = client
         )
 
@@ -53,5 +53,12 @@ class LibraryBookAvailabilityReaderTest {
                 status = LibraryBookAvailabilityStatus.AVAILABLE
             )
         }
+    }
+
+    companion object {
+        private fun configuredCacheManager(): org.springframework.cache.CacheManager =
+            CacheConfig().cacheManager().also { cacheManager ->
+                (cacheManager as org.springframework.cache.support.SimpleCacheManager).initializeCaches()
+            }
     }
 }

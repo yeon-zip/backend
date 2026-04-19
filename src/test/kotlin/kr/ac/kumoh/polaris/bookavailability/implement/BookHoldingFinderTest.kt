@@ -9,9 +9,10 @@ import kr.ac.kumoh.polaris.library.implement.LibraryOpenStatusResolver
 import kr.ac.kumoh.polaris.library.implement.NearbyLibraryQueryRepository
 import kr.ac.kumoh.polaris.library.implement.dto.NearbyLibraryCursor
 import kr.ac.kumoh.polaris.library.implement.dto.NearbyLibraryQueryResult
+import org.mockito.Mockito.mock
+import jakarta.persistence.EntityManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -156,7 +157,7 @@ class BookHoldingFinderTest {
 
     private class FakeNearbyLibraryQueryRepository(
         private val pages: List<List<NearbyLibraryQueryResult>>
-    ) : NearbyLibraryQueryRepository(entityManager = throw UnsupportedOperationException()) {
+    ) : NearbyLibraryQueryRepository(entityManager = mock(EntityManager::class.java)) {
         val calls = mutableListOf<NearbyLibraryCursor?>()
         private var pageIndex: Int = 0
 
@@ -182,10 +183,10 @@ class BookHoldingFinderTest {
     private class FakeLibraryOpenStatusResolver(
         private val openNowByLibraryId: Map<Long, Boolean>
     ) : LibraryOpenStatusResolver(
-        libraryOperatingHourReader = throw UnsupportedOperationException(),
-        libraryClosedRuleReader = throw UnsupportedOperationException(),
-        publicHolidayReader = throw UnsupportedOperationException(),
-        libraryAvailabilityChecker = throw UnsupportedOperationException()
+        libraryOperatingHourReader = mock(kr.ac.kumoh.polaris.library.implement.LibraryOperatingHourReader::class.java),
+        libraryClosedRuleReader = mock(kr.ac.kumoh.polaris.library.implement.LibraryClosedRuleReader::class.java),
+        publicHolidayReader = mock(kr.ac.kumoh.polaris.library.implement.PublicHolidayReader::class.java),
+        libraryAvailabilityChecker = mock(kr.ac.kumoh.polaris.library.implement.LibraryAvailabilityChecker::class.java)
     ) {
         val requests = mutableListOf<List<Long>>()
 
@@ -209,7 +210,7 @@ class BookHoldingFinderTest {
         private val resultsByLibCode: Map<String, LibraryBookAvailabilityResult>
     ) : LibraryBookAvailabilityChecker(
         libraryBookAvailabilityReader = LibraryBookAvailabilityReader(
-            cacheManager = kr.ac.kumoh.polaris.global.config.CacheConfig().cacheManager(),
+            cacheManager = configuredCacheManager(),
             data4LibraryBookExistClient = FakeData4LibraryBookExistClient()
         ),
         properties = Data4LibraryApiProperties(
@@ -241,5 +242,12 @@ class BookHoldingFinderTest {
             libCode: String,
             isbn: String
         ) = throw UnsupportedOperationException()
+    }
+
+    companion object {
+        private fun configuredCacheManager(): org.springframework.cache.CacheManager =
+            kr.ac.kumoh.polaris.global.config.CacheConfig().cacheManager().also { cacheManager ->
+                (cacheManager as org.springframework.cache.support.SimpleCacheManager).initializeCaches()
+            }
     }
 }
