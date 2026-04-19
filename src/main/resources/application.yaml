@@ -88,6 +88,8 @@ core:
       book-exist-concurrency: 4
       book-exist-cache-duration: 30m
       book-exist-cache-max-size: 1000
+      proxy:
+        enabled: false
     naver:
       search:
         list:

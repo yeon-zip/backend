@@ -28,3 +28,9 @@ core:
     allowed-origins:
       - "http://localhost:3000"
       - "https://localhost:3000"
+  openapi:
+    data4library:
+      proxy:
+        enabled: ${DATA4LIBRARY_PROXY_ENABLED:false}
+        host: ${DATA4LIBRARY_PROXY_HOST:127.0.0.1}
+        port: ${DATA4LIBRARY_PROXY_PORT:8088}

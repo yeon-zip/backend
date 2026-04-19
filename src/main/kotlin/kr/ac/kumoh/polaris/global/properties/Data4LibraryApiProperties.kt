@@ -9,5 +9,12 @@ data class Data4LibraryApiProperties(
     val authKey: String,
     val bookExistConcurrency: Int = 4,
     val bookExistCacheDuration: Duration = Duration.ofMinutes(30),
-    val bookExistCacheMaxSize: Long = 1_000L
-)
+    val bookExistCacheMaxSize: Long = 1_000L,
+    val proxy: Proxy = Proxy()
+) {
+    data class Proxy(
+        val enabled: Boolean = false,
+        val host: String = "",
+        val port: Int = 8888
+    )
+}
