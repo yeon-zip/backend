@@ -1,6 +1,5 @@
 package kr.ac.kumoh.polaris.bookavailability.implement
 
-import kr.ac.kumoh.polaris.bookavailability.implement.client.Data4LibraryBookExistClient
 import kr.ac.kumoh.polaris.bookavailability.implement.client.Data4LibraryBookExistResult
 import kr.ac.kumoh.polaris.bookavailability.implement.dto.LibraryBookAvailabilityResult
 import kr.ac.kumoh.polaris.global.properties.Data4LibraryApiProperties
@@ -44,7 +43,6 @@ class LibraryBookAvailabilityChecker(
         isbn: String
     ): Map<String, LibraryBookAvailabilityResult> {
         val distinctLibCodes = libCodes.distinct()
-        val concurrency = properties.bookExist.concurrency.coerceAtLeast(1)
         if (distinctLibCodes.isEmpty()) {
             return emptyMap()
         }

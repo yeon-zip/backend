@@ -246,7 +246,12 @@ class BookHoldingFinderTest {
 
     companion object {
         private fun configuredCacheManager(): org.springframework.cache.CacheManager =
-            kr.ac.kumoh.polaris.global.config.CacheConfig().cacheManager().also { cacheManager ->
+            kr.ac.kumoh.polaris.global.config.CacheConfig().cacheManager(
+                Data4LibraryApiProperties(
+                    baseUrl = "http://example.com",
+                    authKey = "test"
+                )
+            ).also { cacheManager ->
                 (cacheManager as org.springframework.cache.support.SimpleCacheManager).initializeCaches()
             }
     }

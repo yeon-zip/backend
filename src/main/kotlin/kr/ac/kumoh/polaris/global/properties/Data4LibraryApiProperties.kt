@@ -7,7 +7,7 @@ import java.time.Duration
 data class Data4LibraryApiProperties(
     val baseUrl: String,
     val authKey: String,
-    val bookExistConcurrency: Int = 8,
-    val bookExistCacheDuration: Duration = Duration.ofHours(12),
+    val bookExistConcurrency: Int = 4,
+    val bookExistCacheDuration: Duration = Duration.ofMinutes(30),
     val bookExistCacheMaxSize: Long = 1_000L
 )

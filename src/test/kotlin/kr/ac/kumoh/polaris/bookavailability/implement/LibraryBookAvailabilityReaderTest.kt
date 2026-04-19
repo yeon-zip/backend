@@ -57,7 +57,12 @@ class LibraryBookAvailabilityReaderTest {
 
     companion object {
         private fun configuredCacheManager(): org.springframework.cache.CacheManager =
-            CacheConfig().cacheManager().also { cacheManager ->
+            CacheConfig().cacheManager(
+                Data4LibraryApiProperties(
+                    baseUrl = "http://example.com",
+                    authKey = "test"
+                )
+            ).also { cacheManager ->
                 (cacheManager as org.springframework.cache.support.SimpleCacheManager).initializeCaches()
             }
     }
