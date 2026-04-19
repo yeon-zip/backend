@@ -159,3 +159,30 @@ Use this checklist before integrating implementation branches:
 - hash stored exchange codes and code challenges; never log the raw verifier
 - keep the exchange flow inside the auth feature slice rather than moving behavior into `global/config`
 - prefer one new bounded abstraction per concern (login context, exchange service, exchange repository) over broad new layers
+
+
+## Concrete code evidence from the current branch
+- `src/main/kotlin/kr/ac/kumoh/polaris/auth/presentation/controller/AuthController.kt`
+  - login entrypoint currently accepts no request parameters and always redirects directly to `/oauth2/authorization/kakao`
+  - only refresh and logout endpoints exist today; there is no exchange endpoint yet
+- `src/main/kotlin/kr/ac/kumoh/polaris/auth/handler/OAuth2AuthenticationSuccessHandler.kt`
+  - current success path issues Polaris tokens immediately and writes `OidcLoginResponse` JSON
+- `src/main/kotlin/kr/ac/kumoh/polaris/auth/handler/OAuth2AuthenticationFailureHandler.kt`
+  - current failure path always returns `401 application/problem+json`
+- `src/main/kotlin/kr/ac/kumoh/polaris/global/config/SecurityConfig.kt`
+  - current permit-all list covers login/refresh/OAuth callback routes, but not `/api/v1/auth/exchange`
+- `src/main/kotlin/kr/ac/kumoh/polaris/auth/filter/JwtAuthenticationFilter.kt`
+  - `shouldNotFilter()` skips refresh and OAuth callback paths, but not the future exchange path
+- `src/main/resources/application.yaml`
+  - current config includes Kakao OIDC client and JWT settings, but not app target allowlist / exchange TTL / compatibility flags
+- `src/test/kotlin/kr/ac/kumoh/polaris/auth/*`
+  - current auth tests cover refresh-token rotation and JWT filter behavior only; exchange-flow coverage is still missing
+
+## Suggested integration order for implementation + test lanes
+1. land configuration + login-context propagation first
+2. land exchange-code entity/service + `/api/v1/auth/exchange`
+3. convert success/failure handlers to app-aware behavior
+4. add explicit auth `errorCode` coverage on new ProblemDetail responses
+5. finish with callback, exchange, and security regression tests
+
+This order keeps the Spring OAuth/OIDC round-trip stable while the exchange-code path is introduced incrementally.
