@@ -1,6 +1,7 @@
 package kr.ac.kumoh.polaris.global.properties
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import java.time.Duration
 
 @ConfigurationProperties(prefix = "core.openapi.data4library")
 data class Data4LibraryApiProperties(

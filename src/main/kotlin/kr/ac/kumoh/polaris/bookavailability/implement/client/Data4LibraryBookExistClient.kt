@@ -2,8 +2,10 @@ package kr.ac.kumoh.polaris.bookavailability.implement.client
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import kr.ac.kumoh.polaris.bookavailability.implement.dto.LibraryBookAvailabilityStatus
+import kr.ac.kumoh.polaris.global.config.CacheConfig
 import kr.ac.kumoh.polaris.global.properties.Data4LibraryApiProperties
 import org.slf4j.LoggerFactory
+import org.springframework.cache.CacheManager
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
@@ -11,7 +13,8 @@ import reactor.core.publisher.Mono
 @Component
 class Data4LibraryBookExistClient(
     private val data4LibraryWebClient: WebClient,
-    private val properties: Data4LibraryApiProperties
+    private val properties: Data4LibraryApiProperties,
+    private val cacheManager: CacheManager
 ) {
     private val log = LoggerFactory.getLogger(this.javaClass)
 
@@ -29,50 +32,86 @@ class Data4LibraryBookExistClient(
         libCode: String,
         isbn: String
     ): Mono<Data4LibraryBookExistResult> {
-        val startedAt = System.nanoTime()
-
-        return data4LibraryWebClient.get()
-            .uri { builder ->
-                builder.path("/api/bookExist")
-                    .queryParam("authKey", properties.authKey)
-                    .queryParam("libCode", libCode)
-                    .queryParam("isbn13", isbn)
-                    .queryParam("format", "json")
-                    .build()
-            }
-            .retrieve()
-            .bodyToMono(Data4LibraryBookExistResponse::class.java)
-            .map { response ->
-                toResult(
-                    libCode = libCode,
-                    isbn = isbn,
-                    response = response
-                )
-            }
-            .switchIfEmpty(
-                Mono.fromSupplier {
-                    log.warn("도서 소장 여부 응답이 비어 있습니다 - libCode={}, isbn={}", libCode, isbn)
-                    Data4LibraryBookExistResult.unknown(libCode, isbn)
-                }
+        return Mono.defer {
+            val cacheKey = BookExistCacheKey(
+                libCode = libCode,
+                isbn = isbn
             )
-            .doOnSubscribe {
-                log.debug("도서 소장 여부 조회 요청 시작 - libCode={}, isbn={}", libCode, isbn)
-            }
-            .doOnNext { result ->
+            val cached = findCached(cacheKey)
+            if (cached != null) {
                 log.debug(
-                    "도서 소장 여부 조회 완료 - libCode={}, isbn={}, hasBook={}, loanAvailable={}, status={}, elapsedMs={}",
+                    "도서 소장 여부 캐시 적중 - libCode={}, isbn={}, status={}",
                     libCode,
                     isbn,
-                    result.hasBook,
-                    result.loanAvailable,
-                    result.status,
-                    elapsedMillis(startedAt)
+                    cached.status
                 )
+                return@defer Mono.just(cached)
             }
-            .onErrorResume { exception ->
-                log.error("도서 소장 여부 조회 실패 - libCode={}, isbn={}", libCode, isbn, exception)
-                Mono.just(Data4LibraryBookExistResult.unknown(libCode, isbn))
-            }
+
+            val startedAt = System.nanoTime()
+            log.debug("도서 소장 여부 캐시 미스 - libCode={}, isbn={}", libCode, isbn)
+
+            data4LibraryWebClient.get()
+                .uri { builder ->
+                    builder.path("/api/bookExist")
+                        .queryParam("authKey", properties.authKey)
+                        .queryParam("libCode", libCode)
+                        .queryParam("isbn13", isbn)
+                        .queryParam("format", "json")
+                        .build()
+                }
+                .retrieve()
+                .bodyToMono(Data4LibraryBookExistResponse::class.java)
+                .map { response ->
+                    toResult(
+                        libCode = libCode,
+                        isbn = isbn,
+                        response = response
+                    )
+                }
+                .switchIfEmpty(
+                    Mono.fromSupplier {
+                        log.warn("도서 소장 여부 응답이 비어 있습니다 - libCode={}, isbn={}", libCode, isbn)
+                        Data4LibraryBookExistResult.unknown(libCode, isbn)
+                    }
+                )
+                .doOnSubscribe {
+                    log.debug("도서 소장 여부 조회 요청 시작 - libCode={}, isbn={}", libCode, isbn)
+                }
+                .doOnNext { result ->
+                    storeCached(
+                        key = cacheKey,
+                        result = result
+                    )
+                    log.debug(
+                        "도서 소장 여부 조회 완료 - libCode={}, isbn={}, hasBook={}, loanAvailable={}, status={}, elapsedMs={}",
+                        libCode,
+                        isbn,
+                        result.hasBook,
+                        result.loanAvailable,
+                        result.status,
+                        elapsedMillis(startedAt)
+                    )
+                }
+                .onErrorResume { exception ->
+                    log.error("도서 소장 여부 조회 실패 - libCode={}, isbn={}", libCode, isbn, exception)
+                    Data4LibraryBookExistResult.unknown(libCode, isbn)
+                        .also { storeCached(cacheKey, it) }
+                        .let { Mono.just(it) }
+                }
+        }
+    }
+
+    private fun findCached(key: BookExistCacheKey): Data4LibraryBookExistResult? =
+        cacheManager.getCache(CacheConfig.LIBRARY_BOOK_AVAILABILITY_CACHE)
+            ?.get(key, Data4LibraryBookExistResult::class.java)
+
+    private fun storeCached(
+        key: BookExistCacheKey,
+        result: Data4LibraryBookExistResult
+    ) {
+        cacheManager.getCache(CacheConfig.LIBRARY_BOOK_AVAILABILITY_CACHE)
+            ?.put(key, result)
     }
 
     private fun toResult(
@@ -106,6 +145,11 @@ class Data4LibraryBookExistClient(
     private fun elapsedMillis(startedAt: Long): Long =
         (System.nanoTime() - startedAt) / 1_000_000
 }
+
+data class BookExistCacheKey(
+    val libCode: String,
+    val isbn: String
+)
 
 class Data4LibraryBookExistResult(
     val libCode: String,

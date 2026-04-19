@@ -44,6 +44,7 @@ class LibraryBookAvailabilityChecker(
         isbn: String
     ): Map<String, LibraryBookAvailabilityResult> {
         val distinctLibCodes = libCodes.distinct()
+        val concurrency = properties.bookExist.concurrency.coerceAtLeast(1)
         if (distinctLibCodes.isEmpty()) {
             return emptyMap()
         }
