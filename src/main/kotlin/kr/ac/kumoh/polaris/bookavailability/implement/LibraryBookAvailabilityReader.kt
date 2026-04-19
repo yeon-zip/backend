@@ -30,9 +30,18 @@ class LibraryBookAvailabilityReader(
     private fun cacheKey(
         libCode: String,
         isbn: String
-    ): String = "$libCode:$isbn"
+    ): LibraryBookAvailabilityCacheKey =
+        LibraryBookAvailabilityCacheKey(
+            libCode = libCode,
+            isbn = isbn
+        )
 
     companion object {
         const val CACHE_NAME: String = "libraryBookAvailability"
     }
 }
+
+data class LibraryBookAvailabilityCacheKey(
+    val libCode: String,
+    val isbn: String
+)
