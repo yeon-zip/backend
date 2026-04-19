@@ -44,18 +44,11 @@ java.lang.Exception
 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
-Caused by: java.nio.file.NoSuchFileException: /Users/patulus/Documents/projects/polaris/backend/.omx/team/implement-the-approved-kakao-o/worktrees/worker-3/build/kotlin/compileKotlin/cacheable/dirty-sources.txt
-	at java.base/sun.nio.fs.UnixException.translateToIOException(UnixException.java:92)
-	at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:106)
-	at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:111)
-	at java.base/sun.nio.fs.UnixFileSystemProvider.implDelete(UnixFileSystemProvider.java:291)
-	at java.base/sun.nio.fs.AbstractFileSystemProvider.delete(AbstractFileSystemProvider.java:105)
-	at java.base/java.nio.file.Files.delete(Files.java:1153)
-	at org.jetbrains.kotlin.incremental.NonRecoverableCompilationTransaction.deleteFile(CompilationTransaction.kt:148)
-	at org.jetbrains.kotlin.incremental.dirtyFiles.DirtyFilesCachedHistory.clear(DirtyFilesProvider.kt:38)
-	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:539)
-	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:416)
-	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:301)
+Caused by: java.lang.AssertionError: java.lang.Exception: Could not close incremental caches in /Users/patulus/Documents/projects/polaris/backend/.omx/team/implement-the-approved-kakao-o/worktrees/worker-3/build/kotlin/compileTestKotlin/cacheable/caches-jvm/jvm/kotlin: class-attributes.tab
+	at org.jetbrains.kotlin.com.google.common.io.Closer.close(Closer.java:218)
+	at org.jetbrains.kotlin.incremental.IncrementalCachesManager.close(IncrementalCachesManager.kt:55)
+	at kotlin.io.CloseableKt.closeFinally(Closeable.kt:46)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:293)
 	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:128)
 	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:684)
 	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:94)
@@ -73,5 +66,35 @@ Caused by: java.nio.file.NoSuchFileException: /Users/patulus/Documents/projects/
 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
 	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:720)
 	... 3 more
+Caused by: java.lang.Exception: Could not close incremental caches in /Users/patulus/Documents/projects/polaris/backend/.omx/team/implement-the-approved-kakao-o/worktrees/worker-3/build/kotlin/compileTestKotlin/cacheable/caches-jvm/jvm/kotlin: class-attributes.tab
+	at org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.forEachMapSafe(BasicMapsOwner.kt:95)
+	at org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.close(BasicMapsOwner.kt:53)
+	at org.jetbrains.kotlin.com.google.common.io.Closer.close(Closer.java:205)
+	... 22 more
+	Suppressed: java.lang.IllegalStateException: Storage for [/Users/patulus/Documents/projects/polaris/backend/.omx/team/implement-the-approved-kakao-o/worktrees/worker-3/build/kotlin/compileTestKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab] is already registered
+		at org.jetbrains.kotlin.com.intellij.util.io.FilePageCache.registerPagedFileStorage(FilePageCache.java:410)
+		at org.jetbrains.kotlin.com.intellij.util.io.PagedFileStorage.<init>(PagedFileStorage.java:72)
+		at org.jetbrains.kotlin.com.intellij.util.io.ResizeableMappedFile.<init>(ResizeableMappedFile.java:68)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentBTreeEnumerator.<init>(PersistentBTreeEnumerator.java:128)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentEnumerator.createDefaultEnumerator(PersistentEnumerator.java:52)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentMapImpl.<init>(PersistentMapImpl.java:165)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentMapImpl.<init>(PersistentMapImpl.java:140)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentMapBuilder.buildImplementation(PersistentMapBuilder.java:88)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentMapBuilder.build(PersistentMapBuilder.java:71)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentHashMap.<init>(PersistentHashMap.java:46)
+		at org.jetbrains.kotlin.com.intellij.util.io.PersistentHashMap.<init>(PersistentHashMap.java:72)
+		at org.jetbrains.kotlin.incremental.storage.LazyStorage.createMap(LazyStorage.kt:62)
+		at org.jetbrains.kotlin.incremental.storage.LazyStorage.getStorageOrCreateNew(LazyStorage.kt:59)
+		at org.jetbrains.kotlin.incremental.storage.LazyStorage.set(LazyStorage.kt:80)
+		at org.jetbrains.kotlin.incremental.storage.InMemoryStorage.applyChanges(InMemoryStorage.kt:108)
+		at org.jetbrains.kotlin.incremental.storage.InMemoryStorage.close(InMemoryStorage.kt:136)
+		at org.jetbrains.kotlin.incremental.storage.PersistentStorageWrapper.close(PersistentStorage.kt:124)
+		at org.jetbrains.kotlin.incremental.storage.BasicMapsOwner$close$1.invoke(BasicMapsOwner.kt:53)
+		at org.jetbrains.kotlin.incremental.storage.BasicMapsOwner$close$1.invoke(BasicMapsOwner.kt:53)
+		at org.jetbrains.kotlin.incremental.storage.BasicMapsOwner.forEachMapSafe(BasicMapsOwner.kt:87)
+		... 24 more
+		Suppressed: java.lang.Exception: Storage[/Users/patulus/Documents/projects/polaris/backend/.omx/team/implement-the-approved-kakao-o/worktrees/worker-3/build/kotlin/compileTestKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab] registration stack trace
+			at org.jetbrains.kotlin.com.intellij.util.io.FilePageCache.registerPagedFileStorage(FilePageCache.java:437)
+			... 43 more
 
 
