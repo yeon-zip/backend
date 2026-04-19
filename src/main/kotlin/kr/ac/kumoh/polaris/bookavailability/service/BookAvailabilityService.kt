@@ -3,20 +3,16 @@ package kr.ac.kumoh.polaris.bookavailability.service
 import kr.ac.kumoh.polaris.bookavailability.implement.BookHoldingFinder
 import kr.ac.kumoh.polaris.bookavailability.implement.dto.BookHoldingCursor
 import kr.ac.kumoh.polaris.bookavailability.implement.dto.BookHoldingItemResult
-import kr.ac.kumoh.polaris.bookavailability.implement.dto.NearbyLibraryBookAvailability
 import kr.ac.kumoh.polaris.global.dto.CursorPageResult
 import kr.ac.kumoh.polaris.global.exception.ErrorCode
 import kr.ac.kumoh.polaris.global.exception.ServiceException
 import kr.ac.kumoh.polaris.global.util.IsbnNormalizer
-import kr.ac.kumoh.polaris.library.implement.LibraryOpenNowStatus
-import kr.ac.kumoh.polaris.library.implement.LibraryOpenStatusResolver
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 @Service
 class BookAvailabilityService(
-    private val bookHoldingFinder: BookHoldingFinder,
-    private val libraryOpenStatusResolver: LibraryOpenStatusResolver
+    private val bookHoldingFinder: BookHoldingFinder
 ) {
     fun getBookHoldings(
         isbn: String,
@@ -32,23 +28,41 @@ class BookAvailabilityService(
         validateRequest(limit)
 
         val now = LocalDateTime.now()
-        val holdings = buildHoldingItems(
+        val holdings = bookHoldingFinder.findVisibleByIsbn(
             isbn = normalizedIsbn,
             latitude = latitude,
             longitude = longitude,
             radiusKm = radiusKm,
             loanAvailable = loanAvailable,
+            openNow = openNow,
+            cursor = cursor?.let(::parseCursor),
+            limit = limit + 1,
             now = now
         )
-        val filteredHoldings = applyOpenNowFilter(
-            holdings = sortHoldings(holdings),
-            openNow = openNow
-        )
+        val pageItems = if (holdings.size > limit) holdings.take(limit) else holdings
+        val hasNext = holdings.size > limit
 
-        return sliceHoldings(
-            holdings = filteredHoldings,
-            cursor = cursor?.let(::parseCursor),
-            limit = limit
+        return CursorPageResult(
+            nextCursor = if (hasNext) pageItems.lastOrNull()?.toCursor() else null,
+            hasNext = hasNext,
+            items = pageItems
+        )
+    }
+
+    private fun parseCursor(rawCursor: String): BookHoldingCursor {
+        val parts = rawCursor.split(":")
+        if (parts.size != 2) {
+            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
+        }
+
+        val distanceKm = parts[0].toDoubleOrNull()
+            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
+        val libraryId = parts[1].toLongOrNull()
+            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
+
+        return BookHoldingCursor(
+            distanceKm = distanceKm,
+            libraryId = libraryId
         )
     }
 
@@ -77,129 +91,6 @@ class BookAvailabilityService(
         if (limit !in 1..100) {
             throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
         }
-    }
-
-    private fun buildHoldingItems(
-        isbn: String,
-        latitude: Double,
-        longitude: Double,
-        radiusKm: Double,
-        loanAvailable: Boolean?,
-        now: LocalDateTime
-    ): List<BookHoldingItemResult> {
-        val nearbyHoldings = bookHoldingFinder.findByIsbn(
-            isbn = isbn,
-            latitude = latitude,
-            longitude = longitude,
-            radiusKm = radiusKm,
-            loanAvailable = loanAvailable
-        )
-        val openNowStatuses = resolveOpenNowStatuses(
-            holdings = nearbyHoldings,
-            now = now
-        )
-
-        return applyOpenNowStatuses(
-            holdings = nearbyHoldings,
-            openNowStatuses = openNowStatuses
-        )
-    }
-
-    private fun resolveOpenNowStatuses(
-        holdings: List<NearbyLibraryBookAvailability>,
-        now: LocalDateTime
-    ): List<LibraryOpenNowStatus> =
-        libraryOpenStatusResolver.getOpenNowStatuses(
-            libraryIds = holdings.map { holding -> holding.libraryId },
-            now = now
-        )
-
-    private fun applyOpenNowStatuses(
-        holdings: List<NearbyLibraryBookAvailability>,
-        openNowStatuses: List<LibraryOpenNowStatus>
-    ): List<BookHoldingItemResult> {
-        val openNowIndex = openNowStatuses.associate { status ->
-            status.libraryId to status.openNow
-        }
-
-        return holdings.map { holding ->
-            BookHoldingItemResult(
-                libraryId = holding.libraryId,
-                name = holding.name,
-                address = holding.address,
-                latitude = holding.latitude,
-                longitude = holding.longitude,
-                distanceKm = holding.distanceKm,
-                hasBook = holding.hasBook,
-                loanAvailable = holding.loanAvailable,
-                availabilityStatus = holding.status,
-                openNow = openNowIndex[holding.libraryId] ?: false
-            )
-        }
-    }
-
-    private fun sortHoldings(
-        holdings: List<BookHoldingItemResult>
-    ): List<BookHoldingItemResult> =
-        holdings.sortedWith(
-            compareBy<BookHoldingItemResult> { it.distanceKm }
-                .thenBy { it.libraryId }
-        )
-
-    private fun applyOpenNowFilter(
-        holdings: List<BookHoldingItemResult>,
-        openNow: Boolean?
-    ): List<BookHoldingItemResult> =
-        holdings.filter { holding ->
-            openNow == null || holding.openNow == openNow
-        }
-
-    private fun applyCursor(
-        holdings: List<BookHoldingItemResult>,
-        cursor: BookHoldingCursor?
-    ): List<BookHoldingItemResult> {
-        if (cursor == null) {
-            return holdings
-        }
-
-        return holdings.filter { holding ->
-            holding.distanceKm > cursor.distanceKm ||
-                (holding.distanceKm == cursor.distanceKm && holding.libraryId > cursor.libraryId)
-        }
-    }
-
-    private fun parseCursor(rawCursor: String): BookHoldingCursor {
-        val parts = rawCursor.split(":")
-        if (parts.size != 2) {
-            throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
-        }
-
-        val distanceKm = parts[0].toDoubleOrNull()
-            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
-        val libraryId = parts[1].toLongOrNull()
-            ?: throw ServiceException(ErrorCode.INVALID_INPUT_VALUE)
-
-        return BookHoldingCursor(
-            distanceKm = distanceKm,
-            libraryId = libraryId
-        )
-    }
-
-    private fun sliceHoldings(
-        holdings: List<BookHoldingItemResult>,
-        cursor: BookHoldingCursor?,
-        limit: Int
-    ): CursorPageResult<BookHoldingItemResult> {
-        val filteredHoldings = applyCursor(holdings, cursor)
-        val pageItems = filteredHoldings.take(limit)
-        val hasNext = filteredHoldings.size > limit
-        val nextCursor = if (hasNext) pageItems.lastOrNull()?.toCursor() else null
-
-        return CursorPageResult(
-            nextCursor = nextCursor,
-            hasNext = hasNext,
-            items = pageItems
-        )
     }
 
     private fun BookHoldingItemResult.toCursor(): String = "$distanceKm:$libraryId"

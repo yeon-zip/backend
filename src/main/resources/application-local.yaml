@@ -49,6 +49,7 @@ core:
     data4library:
       base-url: "http://data4library.kr"
       auth-key: ${DATA4LIBRARY_AUTH_KEY}
+      book-exist-concurrency: 8
     naver:
       search:
         list:
