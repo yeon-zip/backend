@@ -79,6 +79,14 @@ core:
       secret: ${JWT_SECRET:polaris-auth-jwt-secret-key-polstar-2026-32bytes}
       access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:3600}
       refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS:1209600}
+    oidc:
+      app:
+        targets: {}
+        exchange:
+          ttl: ${OIDC_APP_EXCHANGE_TTL:3m}
+          allow-without-proof: ${OIDC_APP_EXCHANGE_ALLOW_WITHOUT_PROOF:false}
+      legacy-json-callback:
+        enabled: ${OIDC_LEGACY_JSON_CALLBACK_ENABLED:false}
 
 ---
 
