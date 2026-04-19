@@ -43,3 +43,9 @@ Use this checklist when integrating the implementation and test branches for the
 - [ ] duplicate redemption race/idempotency test
 - [ ] security-chain tests for permit-all + JWT-filter skip
 - [ ] refresh/logout regression tests
+
+## Reviewer handoff note
+- Treat the review document as the contract narrative and this checklist as the merge gate.
+- If implementation and tests disagree, prefer the frozen plan contract over opportunistic behavior.
+- Do not accept any redirect path that carries Polaris access or refresh tokens back to the app.
+
