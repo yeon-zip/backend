@@ -80,3 +80,9 @@ If lane 3 adds focused tests, prefer running that class directly as part of the 
 ## Review conclusion
 
 As inspected in this worktree, the current baseline still performs full-radius availability resolution and therefore does **not** yet provide the approved bounded-call behavior. This note is intended to help the leader validate the final merged patch quickly by comparing the integrated code/tests against the exact over-call points identified above.
+
+
+## Baseline verification snapshot (worker-3 branch)
+
+- `./gradlew compileKotlin` ✅
+- `./gradlew test` ❌ — existing `PolestarApplicationTests` bootstrap failure: `Unable to find a @SpringBootConfiguration by searching packages upwards from the test.` The failing test lives at `src/test/kotlin/kr/ac/kumoh/polestar/PolestarApplicationTests.kt`, which appears unrelated to the incremental-scan work and was not changed in this lane.
