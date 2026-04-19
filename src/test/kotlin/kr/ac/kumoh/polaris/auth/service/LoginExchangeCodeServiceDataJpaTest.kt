@@ -20,6 +20,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.transaction.support.TransactionTemplate
 import java.security.MessageDigest
 import java.time.Duration
 import java.util.Base64
@@ -35,7 +36,9 @@ class LoginExchangeCodeServiceDataJpaTest(
     @Autowired private val loginExchangeCodeService: LoginExchangeCodeService,
     @Autowired private val userRepository: UserRepository,
     @Autowired private val loginExchangeCodeRepository: LoginExchangeCodeRepository,
-    @Autowired private val refreshTokenRepository: RefreshTokenRepository
+    @Autowired private val refreshTokenRepository: RefreshTokenRepository,
+    @Autowired private val authTokenService: AuthTokenService,
+    @Autowired private val transactionTemplate: TransactionTemplate
 ) {
     @Test
     fun `proof-bound exchange code redeems exactly once`() {
@@ -90,6 +93,61 @@ class LoginExchangeCodeServiceDataJpaTest(
     }
 
     @Test
+    fun `proof-bound exchange rejects syntactically invalid verifier`() {
+        val user = userRepository.save(testUser("invalid-verifier"))
+        val codeVerifier = validCodeVerifier("invalid-verifier")
+        val exchangeCode = loginExchangeCodeService.issueExchangeCode(
+            user = user,
+            targetId = "mobile",
+            codeChallenge = pkceS256(codeVerifier)
+        )
+
+        val exception = assertThrows(ServiceException::class.java) {
+            loginExchangeCodeService.redeem(exchangeCode, "mobile", "short")
+        }
+        assertEquals(ErrorCode.OIDC_INVALID_CODE_VERIFIER, exception.errorCode)
+    }
+
+    @Test
+    fun `proofless exchange works only when compatibility mode is enabled`() {
+        val compatibilityService = LoginExchangeCodeService(
+            authAppLoginProperties = AuthAppLoginProperties(
+                app = AuthAppLoginProperties.App(
+                    targets = mapOf(
+                        "mobile" to "polaris://auth/callback",
+                        "tablet" to "https://app.polaris.test/auth/callback"
+                    ),
+                    exchange = AuthAppLoginProperties.Exchange(
+                        ttl = Duration.ofMinutes(3),
+                        allowWithoutProof = true
+                    )
+                )
+            ),
+            loginExchangeCodeRepository = loginExchangeCodeRepository,
+            authTokenService = authTokenService,
+            transactionTemplate = transactionTemplate
+        )
+        val user = userRepository.save(testUser("compatibility"))
+
+        val exchangeCode = compatibilityService.issueExchangeCode(
+            user = user,
+            targetId = "mobile",
+            codeChallenge = null
+        )
+
+        val tokenResponse = compatibilityService.redeem(
+            code = exchangeCode,
+            targetId = "mobile",
+            codeVerifier = null
+        )
+
+        val persisted = loginExchangeCodeRepository.findByCodeHash(sha256Hex(exchangeCode))
+        assertEquals(LoginExchangeCodeStatus.ISSUED, persisted?.issuanceStatus)
+        assertEquals(user.id, tokenResponse.userId)
+        assertNotNull(refreshTokenRepository.findByToken(tokenResponse.refreshToken))
+    }
+
+    @Test
     fun `issuing proofless exchange code is disabled by default`() {
         val user = userRepository.save(testUser("proofless-default-off"))
 
@@ -100,7 +158,7 @@ class LoginExchangeCodeServiceDataJpaTest(
     }
 
     @Test
-    fun `wrong target is rejected during redemption`() {
+    fun `bound target mismatch is rejected during redemption`() {
         val user = userRepository.save(testUser("wrong-target"))
         val codeVerifier = validCodeVerifier("wrong-target")
         val exchangeCode = loginExchangeCodeService.issueExchangeCode(
@@ -111,6 +169,22 @@ class LoginExchangeCodeServiceDataJpaTest(
 
         val exception = assertThrows(ServiceException::class.java) {
             loginExchangeCodeService.redeem(exchangeCode, "tablet", codeVerifier)
+        }
+        assertEquals(ErrorCode.OIDC_EXCHANGE_CODE_INVALID, exception.errorCode)
+    }
+
+    @Test
+    fun `unknown target is rejected before redemption`() {
+        val user = userRepository.save(testUser("unknown-target"))
+        val codeVerifier = validCodeVerifier("unknown-target")
+        val exchangeCode = loginExchangeCodeService.issueExchangeCode(
+            user = user,
+            targetId = "mobile",
+            codeChallenge = pkceS256(codeVerifier)
+        )
+
+        val exception = assertThrows(ServiceException::class.java) {
+            loginExchangeCodeService.redeem(exchangeCode, "desktop", codeVerifier)
         }
         assertEquals(ErrorCode.OIDC_TARGET_NOT_ALLOWED, exception.errorCode)
     }
