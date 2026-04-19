@@ -21,7 +21,7 @@ data class BookHoldingItemResponse(
     val hasBook: Boolean?,
     @Schema(description = "도서 대출 가능 여부입니다.", example = "false", nullable = false)
     val loanAvailable: Boolean?,
-    @Schema(description = "도서 이용 상태입니다. 이용 가능(<code>AVAILABLE</code>), 이용 불가(<code>UNAVAILABLE</code>), 알 수 없음(<code>UNKNOWN</code>)의 값을 가집니다. 상태가 새롭게 추가될 수 있습니다.", example = "UNAVAILABLE", nullable = false)
+    @Schema(description = "도서 이용 상태입니다. 대출 가능(<code>AVAILABLE</code>), 대출 중(<code>ON_LOAN</code>), 대출 불가(<code>UNAVAILABLE</code>), 알 수 없음(<code>UNKNOWN</code>)의 값을 가집니다. 상태가 새롭게 추가될 수 있습니다.", example = "ON_LOAN", nullable = false)
     val availabilityStatus: LibraryBookAvailabilityStatus,
     @Schema(description = "도서관 운영 여부입니다.", example = "true", nullable = false)
 

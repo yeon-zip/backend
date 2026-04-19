@@ -48,6 +48,7 @@ class BookHoldingFinder(
             if (nearbyLibraries.isEmpty()) {
                 break
             }
+            val hasMoreNearbyLibraries = nearbyLibraries.size == limit
 
             nearbyCursor = nearbyLibraries.last().toNearbyCursor()
 
@@ -64,6 +65,9 @@ class BookHoldingFinder(
             }
 
             if (visibleCandidates.isEmpty()) {
+                if (!hasMoreNearbyLibraries) {
+                    break
+                }
                 continue
             }
 
@@ -92,6 +96,10 @@ class BookHoldingFinder(
                 if (visibleHoldings.size == limit) {
                     break
                 }
+            }
+
+            if (!hasMoreNearbyLibraries) {
+                break
             }
         }
 

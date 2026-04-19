@@ -17,6 +17,20 @@ class LibraryBookAvailabilityResult(
 
 enum class LibraryBookAvailabilityStatus {
     AVAILABLE,
+    ON_LOAN,
     UNAVAILABLE,
-    UNKNOWN
+    UNKNOWN;
+
+    companion object {
+        fun resolve(
+            hasBook: Boolean?,
+            loanAvailable: Boolean?
+        ): LibraryBookAvailabilityStatus =
+            when {
+                hasBook == true && loanAvailable == true -> AVAILABLE
+                hasBook == true && loanAvailable == false -> ON_LOAN
+                hasBook == false -> UNAVAILABLE
+                else -> UNKNOWN
+            }
+    }
 }

@@ -4,38 +4,24 @@ spring:
       on-profile: dev
 
   datasource:
-    # 22936은 Docker 매핑 포트였습니다. 이제는 DB VM의 원래 포트인 3306을 씁니다.
     url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/local
-    username: ${DATASOURCE_ID}       # 기존 env 변수 그대로 사용 가능
-    password: ${DATASOURCE_PASSWORD} # 기존 env 변수 그대로 사용 가능
+    username: ${DATASOURCE_ID}
+    password: ${DATASOURCE_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
   jpa:
     properties:
       hibernate:
-        format_sql: true
-        hbm2ddl.auto: update
-    show-sql: true
+        hbm2ddl.auto: validate
 
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
     kr.ac.kumoh.polaris: debug
 
 springdoc:
-  trim-kotlin-indent: true
-  packagesToScan: kr.ac.kumoh.polaris
-  default-consumes-media-type: application/json;charset=UTF-8
-  default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
-    enabled: true
-    operations-sorter: alpha
-    display-request-duration: true
-    tags-sorter: alpha
+    enabled: false
   api-docs:
-    enabled: true
-    groups:
-      enabled: false
+    enabled: false
 
 core:
   cors:

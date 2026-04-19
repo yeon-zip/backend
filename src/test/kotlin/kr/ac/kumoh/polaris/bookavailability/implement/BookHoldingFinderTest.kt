@@ -124,6 +124,52 @@ class BookHoldingFinderTest {
         assertEquals(listOf("F"), checker.requestedLibCodes)
     }
 
+    @Test
+    fun `partial final page does not trigger an extra empty nearby query`() {
+        val nearbyPages = listOf(
+            listOf(
+                nearbyLibrary(1L, "A", 1, 1000),
+                nearbyLibrary(2L, "B", 2, 2000),
+                nearbyLibrary(3L, "C", 3, 3000),
+                nearbyLibrary(4L, "D", 4, 4000)
+            ),
+            listOf(
+                nearbyLibrary(5L, "E", 5, 5000)
+            )
+        )
+        val nearbyRepository = FakeNearbyLibraryQueryRepository(nearbyPages)
+        val checker = FakeLibraryBookAvailabilityChecker(
+            resultsByLibCode = mapOf(
+                "A" to availability(hasBook = false, loanAvailable = null),
+                "B" to availability(hasBook = false, loanAvailable = null),
+                "C" to availability(hasBook = false, loanAvailable = null),
+                "D" to availability(hasBook = false, loanAvailable = null),
+                "E" to availability(hasBook = true, loanAvailable = true)
+            )
+        )
+        val finder = BookHoldingFinder(
+            nearbyLibraryQueryRepository = nearbyRepository,
+            libraryBookAvailabilityChecker = checker,
+            libraryOpenStatusResolver = FakeLibraryOpenStatusResolver(emptyMap())
+        )
+
+        val results = finder.findVisibleByIsbn(
+            isbn = "9781234567890",
+            latitude = 36.0,
+            longitude = 128.0,
+            radiusKm = 5.0,
+            loanAvailable = null,
+            openNow = null,
+            cursor = null,
+            limit = 4,
+            now = java.time.LocalDateTime.of(2026, 4, 19, 12, 0)
+        )
+
+        assertEquals(listOf(5L), results.map { it.libraryId })
+        assertEquals(2, nearbyRepository.calls.size)
+        assertEquals(listOf("A", "B", "C", "D", "E"), checker.requestedLibCodes)
+    }
+
     private fun nearbyLibrary(
         libraryId: Long,
         libCode: String,
@@ -148,11 +194,7 @@ class BookHoldingFinderTest {
     ) = LibraryBookAvailabilityResult(
         hasBook = hasBook,
         loanAvailable = loanAvailable,
-        status = when (hasBook) {
-            true -> LibraryBookAvailabilityStatus.AVAILABLE
-            false -> LibraryBookAvailabilityStatus.UNAVAILABLE
-            null -> LibraryBookAvailabilityStatus.UNKNOWN
-        }
+        status = LibraryBookAvailabilityStatus.resolve(hasBook, loanAvailable)
     )
 
     private class FakeNearbyLibraryQueryRepository(
