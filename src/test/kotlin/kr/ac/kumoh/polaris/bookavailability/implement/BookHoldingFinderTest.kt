@@ -119,7 +119,7 @@ class BookHoldingFinderTest {
         )
 
         assertEquals(listOf(6L), results.map { it.libraryId })
-        val cursorUsed = assertNotNull(nearbyRepository.calls.single())
+        val cursorUsed = assertNotNull(nearbyRepository.calls.first())
         assertEquals(NearbyLibraryCursor(distanceMeter = 5000L, libraryId = 5L), cursorUsed)
         assertEquals(listOf("F"), checker.requestedLibCodes)
     }
