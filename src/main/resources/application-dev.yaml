@@ -2,7 +2,6 @@ spring:
   config:
     activate:
       on-profile: dev
-
   datasource:
     url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/local
     username: ${DATASOURCE_ID}
@@ -17,6 +16,7 @@ logging:
   level:
     kr.ac.kumoh.polaris: debug
 
+## 이 설정을 변경하지 마십시오. OpenAPI는 로컬 환경에서만 사용하세요.
 springdoc:
   swagger-ui:
     enabled: false
@@ -28,22 +28,3 @@ core:
     allowed-origins:
       - "http://localhost:3000"
       - "https://localhost:3000"
-    allowed-methods: [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ]
-    allowed-headers: [ "*" ]
-    exposed-headers: [ ]
-    allow-credentials: true
-    max-age: 3600
-  openapi:
-    data4library:
-      base-url: "http://data4library.kr"
-      auth-key: ${DATA4LIBRARY_AUTH_KEY}
-    naver:
-      search:
-        list:
-          base-url: "https://openapi.naver.com//v1/search/book.json"
-          client-id: ${NAVER_BOOK_SEARCH_LIST_CLIENT_ID}
-          client-secret: ${NAVER_BOOK_SEARCH_LIST_CLIENT_SECRET}
-        detail:
-          base-url: "https://openapi.naver.com/v1/search/book_adv.json"
-          client-id: ${NAVER_BOOK_SEARCH_DETAIL_CLIENT_ID}
-          client-secret: ${NAVER_BOOK_SEARCH_DETAIL_CLIENT_SECRET}
