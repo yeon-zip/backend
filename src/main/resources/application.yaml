@@ -81,7 +81,8 @@ core:
       refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS:1209600}
     oidc:
       app:
-        targets: {}
+        targets:
+          mobile: ${OIDC_APP_TARGET_MOBILE:polaris://auth/callback}
         exchange:
           ttl: ${OIDC_APP_EXCHANGE_TTL:3m}
           allow-without-proof: ${OIDC_APP_EXCHANGE_ALLOW_WITHOUT_PROOF:false}

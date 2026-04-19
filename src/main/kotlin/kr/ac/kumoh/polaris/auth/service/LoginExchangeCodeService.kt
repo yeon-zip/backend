@@ -91,14 +91,10 @@ class LoginExchangeCodeService(
             throw ServiceException(ErrorCode.OIDC_EXCHANGE_CODE_EXPIRED)
         }
         if (exchangeCode.targetId != targetId) {
-            throw ServiceException(ErrorCode.OIDC_EXCHANGE_CODE_INVALID)
+            throw ServiceException(ErrorCode.OIDC_EXCHANGE_TARGET_MISMATCH)
         }
 
-        val storedChallengeHash = exchangeCode.codeChallengeHash
-        if (storedChallengeHash == null) {
-            return
-        }
-
+        val storedChallengeHash = exchangeCode.codeChallengeHash ?: return
         val normalizedVerifier = codeVerifier?.trim().takeUnless { it.isNullOrEmpty() }
             ?: throw ServiceException(ErrorCode.OIDC_PROOF_REQUIRED)
         validateCodeVerifier(normalizedVerifier)
@@ -127,10 +123,7 @@ class LoginExchangeCodeService(
     }
 
     private fun asIssuanceFailure(exception: RuntimeException): RuntimeException = when (exception) {
-        is ServiceException -> ServiceException(
-            ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE,
-            exception.message
-        )
+        is ServiceException -> ServiceException(ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE, exception.message)
         else -> ServiceException(ErrorCode.OIDC_TERMINAL_ISSUANCE_FAILURE)
     }
 
@@ -157,6 +150,6 @@ class LoginExchangeCodeService(
 
     companion object {
         private val secureRandom = SecureRandom()
-        private val CODE_VERIFIER_PATTERN = Regex("^[A-Za-z0-9\\-._~]{43,128}$")
+        private val CODE_VERIFIER_PATTERN = Regex("^[A-Za-z0-9._~-]{43,128}$")
     }
 }

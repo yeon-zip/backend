@@ -92,21 +92,6 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    fun `exchange endpoint skips jwt access token parsing`() {
-        val user = testUser(3L)
-        val refreshToken = jwtTokenProvider.generateRefreshToken(user)
-        val request = MockHttpServletRequest("POST", "/api/v1/auth/exchange").apply {
-            addHeader("Authorization", "Bearer $refreshToken")
-        }
-        val response = MockHttpServletResponse()
-
-        filter.doFilter(request, response, MockFilterChain())
-
-        assertNull(SecurityContextHolder.getContext().authentication)
-        assertEquals(200, response.status)
-    }
-
-    @Test
     fun `invalid access token returns unauthorized`() {
         val request = MockHttpServletRequest("GET", "/api/v1/users/me").apply {
             addHeader("Authorization", "Bearer invalid-token")

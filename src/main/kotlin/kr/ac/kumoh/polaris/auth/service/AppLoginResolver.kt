@@ -27,24 +27,17 @@ class AppLoginResolver(
         val codeChallengeMethod = codeChallengeMethodValue?.trim()?.takeIf { it.isNotEmpty() }
 
         val appLoginContext = when (channel) {
-            AppLoginChannel.APP -> buildAppContext(
-                targetIdValue = targetIdValue,
-                codeChallenge = codeChallenge,
-                codeChallengeMethod = codeChallengeMethod
-            )
-            AppLoginChannel.WEB -> buildWebContext(
-                codeChallenge = codeChallenge,
-                codeChallengeMethod = codeChallengeMethod
-            )
+            AppLoginChannel.APP -> buildAppContext(targetIdValue, codeChallenge, codeChallengeMethod)
+            AppLoginChannel.WEB -> buildWebContext(codeChallenge, codeChallengeMethod)
         }
 
         appLoginAuthorizationRequestRepository.saveAppLoginContext(request, appLoginContext)
         return KAKAO_AUTHORIZATION_ENDPOINT
     }
 
-    fun resolveTargetUri(targetId: String): String = authAppLoginProperties.targets[targetId]
+    fun resolveTargetUri(targetId: String): String = authAppLoginProperties.resolveTarget(targetId)
         ?: throw ServiceException(
-            ErrorCode.OIDC_INVALID_TARGET,
+            ErrorCode.OIDC_TARGET_NOT_ALLOWED,
             "허용되지 않은 로그인 대상입니다: $targetId"
         )
 
@@ -54,10 +47,7 @@ class AppLoginResolver(
         codeChallengeMethod: String?
     ): AppLoginContext {
         val targetId = targetIdValue?.trim()?.takeIf { it.isNotEmpty() }
-            ?: throw ServiceException(
-                ErrorCode.OIDC_INVALID_TARGET,
-                "앱 로그인 대상 target이 필요합니다."
-            )
+            ?: throw ServiceException(ErrorCode.OIDC_TARGET_NOT_ALLOWED, "앱 로그인 대상 target이 필요합니다.")
 
         resolveTargetUri(targetId)
         validateProofRequirements(codeChallenge, codeChallengeMethod)
@@ -89,11 +79,8 @@ class AppLoginResolver(
         codeChallenge: String?,
         codeChallengeMethod: String?
     ) {
-        if (codeChallenge == null && !authAppLoginProperties.appExchange.allowWithoutProof) {
-            throw ServiceException(
-                ErrorCode.OIDC_PROOF_REQUIRED,
-                "앱 로그인에는 PKCE S256 codeChallenge가 필요합니다."
-            )
+        if (codeChallenge == null && !authAppLoginProperties.app.exchange.allowWithoutProof) {
+            throw ServiceException(ErrorCode.OIDC_PROOF_REQUIRED, "앱 로그인에는 PKCE S256 codeChallenge가 필요합니다.")
         }
 
         if (codeChallenge != null || codeChallengeMethod != null) {
@@ -106,24 +93,16 @@ class AppLoginResolver(
         codeChallengeMethod: String?
     ) {
         if (codeChallenge.isNullOrBlank()) {
-            throw ServiceException(
-                ErrorCode.OIDC_PROOF_REQUIRED,
-                "codeChallenge가 필요합니다."
-            )
+            throw ServiceException(ErrorCode.OIDC_PROOF_REQUIRED, "codeChallenge가 필요합니다.")
         }
-
         if (codeChallengeMethod != REQUIRED_CODE_CHALLENGE_METHOD) {
             throw ServiceException(
                 ErrorCode.OIDC_UNSUPPORTED_CODE_CHALLENGE_METHOD,
                 "지원하지 않는 codeChallengeMethod입니다: ${codeChallengeMethod ?: "null"}"
             )
         }
-
         if (!CODE_CHALLENGE_PATTERN.matches(codeChallenge)) {
-            throw ServiceException(
-                ErrorCode.OIDC_INVALID_CODE_CHALLENGE,
-                "codeChallenge는 base64url 형식이어야 합니다."
-            )
+            throw ServiceException(ErrorCode.OIDC_INVALID_CODE_CHALLENGE, "codeChallenge는 base64url 형식이어야 합니다.")
         }
     }
 

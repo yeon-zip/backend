@@ -170,7 +170,7 @@ class LoginExchangeCodeServiceDataJpaTest(
         val exception = assertThrows(ServiceException::class.java) {
             loginExchangeCodeService.redeem(exchangeCode, "tablet", codeVerifier)
         }
-        assertEquals(ErrorCode.OIDC_EXCHANGE_CODE_INVALID, exception.errorCode)
+        assertEquals(ErrorCode.OIDC_EXCHANGE_TARGET_MISMATCH, exception.errorCode)
     }
 
     @Test

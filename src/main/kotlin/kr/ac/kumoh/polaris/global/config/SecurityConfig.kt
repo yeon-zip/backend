@@ -1,5 +1,6 @@
 package kr.ac.kumoh.polaris.global.config
 
+import kr.ac.kumoh.polaris.auth.config.AppLoginAuthorizationRequestRepository
 import kr.ac.kumoh.polaris.auth.filter.JwtAuthenticationFilter
 import kr.ac.kumoh.polaris.auth.handler.OAuth2AuthenticationFailureHandler
 import kr.ac.kumoh.polaris.auth.handler.OAuth2AuthenticationSuccessHandler
@@ -16,6 +17,7 @@ import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import tools.jackson.databind.ObjectMapper
@@ -28,31 +30,22 @@ class SecurityConfig(
     private val jwtTokenProvider: JwtTokenProvider,
     private val kakaoOidcUserService: KakaoOidcUserService,
     private val oauth2AuthenticationSuccessHandler: OAuth2AuthenticationSuccessHandler,
-    private val oauth2AuthenticationFailureHandler: OAuth2AuthenticationFailureHandler
+    private val oauth2AuthenticationFailureHandler: OAuth2AuthenticationFailureHandler,
+    private val appLoginAuthorizationRequestRepository: AppLoginAuthorizationRequestRepository
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http {
             headers {
-                frameOptions {
-                    disable()
-                }
+                frameOptions { disable() }
             }
             sessionManagement {
                 sessionCreationPolicy = SessionCreationPolicy.IF_REQUIRED
             }
-            csrf {
-                disable()
-            }
-            httpBasic {
-                disable()
-            }
-            formLogin {
-                disable()
-            }
-            cors {
-                CorsConfig()
-            }
+            csrf { disable() }
+            httpBasic { disable() }
+            formLogin { disable() }
+            cors { CorsConfig() }
             authorizeHttpRequests {
                 authorize("/api/v1/auth/kakao/login", permitAll)
                 authorize("/api/v1/auth/exchange", permitAll)
@@ -70,8 +63,10 @@ class SecurityConfig(
             }
         }
 
-
         http.oauth2Login { oauth2 ->
+            oauth2.authorizationEndpoint { authorization ->
+                authorization.authorizationRequestRepository(appLoginAuthorizationRequestRepository as org.springframework.security.oauth2.client.web.AuthorizationRequestRepository<OAuth2AuthorizationRequest>)
+            }
             oauth2.userInfoEndpoint { userInfo ->
                 userInfo.oidcUserService(kakaoOidcUserService)
             }
