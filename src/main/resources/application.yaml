@@ -56,10 +56,9 @@ management:
 core:
   openapi:
     data4library:
-      book-exist:
-        concurrency: 8
-        cache-duration: 12h
-        cache-max-size: 1000
+      book-exist-concurrency: 8
+      book-exist-cache-duration: 12h
+      book-exist-cache-max-size: 1000
 
 ---
 
