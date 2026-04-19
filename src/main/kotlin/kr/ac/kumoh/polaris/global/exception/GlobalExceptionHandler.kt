@@ -80,6 +80,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         val problemDetail = ProblemDetail.forStatus(ex.errorCode.httpStatus).apply {
             title = ex.errorCode.httpStatus.reasonPhrase
             detail = ex.message
+            setProperty("errorCode", ex.errorCode.name)
         }
 
         return ResponseEntity.status(ex.errorCode.httpStatus)

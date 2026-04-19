@@ -62,6 +62,20 @@ class JwtAuthenticationFilterTest {
         assertEquals(200, response.status)
     }
 
+
+    @Test
+    fun `exchange endpoint skips jwt parsing even with invalid bearer token`() {
+        val request = MockHttpServletRequest("POST", "/api/v1/auth/exchange").apply {
+            addHeader("Authorization", "Bearer invalid-token")
+        }
+        val response = MockHttpServletResponse()
+
+        filter.doFilter(request, response, MockFilterChain())
+
+        assertNull(SecurityContextHolder.getContext().authentication)
+        assertEquals(200, response.status)
+    }
+
     @Test
     fun `invalid access token returns unauthorized`() {
         val request = MockHttpServletRequest("GET", "/api/v1/users/me").apply {

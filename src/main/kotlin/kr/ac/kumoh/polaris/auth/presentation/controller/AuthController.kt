@@ -8,6 +8,7 @@ import jakarta.validation.Valid
 import kr.ac.kumoh.polaris.auth.presentation.request.ExchangeCodeRequest
 import kr.ac.kumoh.polaris.auth.presentation.response.AuthTokenResponse
 import kr.ac.kumoh.polaris.auth.principal.AuthenticatedUser
+import kr.ac.kumoh.polaris.auth.service.AppExchangeCodeService
 import kr.ac.kumoh.polaris.auth.service.AuthTokenService
 import kr.ac.kumoh.polaris.auth.service.LoginExchangeCodeService
 import org.springframework.http.HttpHeaders
@@ -17,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -26,13 +28,19 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
     private val authTokenService: AuthTokenService,
-    private val loginExchangeCodeService: LoginExchangeCodeService
+    private val appExchangeCodeService: AppExchangeCodeService
 ) {
     @Operation(summary = "Kakao OIDC 로그인 진입점")
     @GetMapping("/kakao/login")
     fun redirectToKakaoLogin(response: HttpServletResponse) {
         response.sendRedirect("/oauth2/authorization/kakao")
     }
+
+    @Operation(summary = "exchange code로 토큰 발급")
+    @PostMapping("/exchange")
+    fun exchange(
+        @Valid @RequestBody request: ExchangeCodeRequest
+    ): ResponseEntity<AuthTokenResponse> = ResponseEntity.ok(appExchangeCodeService.exchange(request))
 
     @Operation(summary = "refresh token으로 토큰 재발급")
     @PostMapping("/refresh")
