@@ -4,6 +4,7 @@ import kr.ac.kumoh.polaris.book.implement.BookMetadataLoader
 import kr.ac.kumoh.polaris.book.implement.BookReader
 import kr.ac.kumoh.polaris.book.implement.BookWriter
 import kr.ac.kumoh.polaris.book.implement.dto.BookResult
+import kr.ac.kumoh.polaris.bookmark.implement.BookmarkStatusReader
 import kr.ac.kumoh.polaris.global.exception.ErrorCode
 import kr.ac.kumoh.polaris.global.exception.ServiceException
 import kr.ac.kumoh.polaris.global.util.IsbnNormalizer
@@ -13,9 +14,13 @@ import org.springframework.stereotype.Service
 class BookService(
     private val bookReader: BookReader,
     private val bookMetadataLoader: BookMetadataLoader,
-    private val bookWriter: BookWriter
+    private val bookWriter: BookWriter,
+    private val bookmarkStatusReader: BookmarkStatusReader
 ) {
-    fun getBook(isbn: String): BookResult {
+    fun getBook(
+        isbn: String,
+        userId: Long? = null
+    ): BookResult {
         val normalizedIsbn = IsbnNormalizer.normalize(isbn)
 
         val book = bookReader.findByIsbn(normalizedIsbn)
@@ -33,7 +38,8 @@ class BookService(
             publisher = book.publisher,
             description = book.description,
             publicationDate = book.publicationDate,
-            coverImageUrl = book.coverImageUrl
+            coverImageUrl = book.coverImageUrl,
+            isBookmarked = bookmarkStatusReader.isBookBookmarked(userId, book.id)
         )
     }
 }

@@ -10,8 +10,10 @@ import kr.ac.kumoh.polaris.book.presentation.response.BookResponse
 import kr.ac.kumoh.polaris.book.presentation.response.BookSearchItemResponse
 import kr.ac.kumoh.polaris.book.service.BookSearchService
 import kr.ac.kumoh.polaris.book.service.BookService
+import kr.ac.kumoh.polaris.auth.principal.AuthenticatedUser
 import kr.ac.kumoh.polaris.global.dto.CursorPageResponse
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -49,12 +51,14 @@ class BookController(
     fun searchBooks(
         @RequestParam query: String,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(defaultValue = "10") limit: Int
+        @RequestParam(defaultValue = "10") limit: Int,
+        @AuthenticationPrincipal authenticatedUser: AuthenticatedUser?
     ): ResponseEntity<CursorPageResponse<BookSearchItemResponse>> {
         val result = bookSearchService.searchBooks(
             query = query,
             cursor = cursor,
-            limit = limit
+            limit = limit,
+            userId = authenticatedUser?.id
         )
 
         return ResponseEntity.ok(
@@ -75,9 +79,13 @@ class BookController(
     )
     @GetMapping("/{isbn}")
     fun getBook(
-        @PathVariable isbn: String
+        @PathVariable isbn: String,
+        @AuthenticationPrincipal authenticatedUser: AuthenticatedUser?
     ): ResponseEntity<BookResponse> {
-        val result = bookService.getBook(isbn)
+        val result = bookService.getBook(
+            isbn = isbn,
+            userId = authenticatedUser?.id
+        )
 
         return ResponseEntity.ok(BookResponse.from(result))
     }

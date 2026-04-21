@@ -9,6 +9,7 @@ enum class ErrorCode(
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "잘못된 값을 입력했어요. 입력 값을 다시 확인해 주세요."),
     BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 도서를 찾을 수 없어요. 입력 값을 다시 확인해 주세요."),
     LIBRARY_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 도서관을 찾을 수 없어요. 입력 값을 다시 확인해 주세요."),
+    BOOKMARK_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 찜한 항목이에요."),
     EXTERNAL_API_COMMUNICATION_FAILED(HttpStatus.BAD_GATEWAY, "외부 API와의 통신에 실패했어요. 잠시 후 다시 시도하세요."),
     EXTERNAL_API_RESPONSE_PARSE_FAILED(HttpStatus.BAD_GATEWAY, "외부 API 응답을 처리하는 데 실패했어요."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 사용자를 찾을 수 없어요."),

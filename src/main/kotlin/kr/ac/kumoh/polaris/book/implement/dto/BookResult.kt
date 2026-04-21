@@ -9,5 +9,6 @@ data class BookResult(
     val publisher: String?,
     val description: String?,
     val publicationDate: LocalDate?,
-    val coverImageUrl: String?
+    val coverImageUrl: String?,
+    val isBookmarked: Boolean
 )

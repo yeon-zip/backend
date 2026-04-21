@@ -20,6 +20,8 @@ data class LibraryResponse(
     val tel: String?,
     @Schema(description = "도서관 운영 여부입니다.", example = "true", nullable = false)
     val openNow: Boolean,
+    @Schema(description = "현재 인증 사용자의 찜 여부입니다.", example = "false", nullable = false)
+    val isBookmarked: Boolean,
     val todayOperatingHour: TodayOperatingHourResponse?,
     val weeklyOperatingHours: List<WeeklyOperatingHourResponse>,
     val closedRules: List<ClosedRuleResponse>
@@ -35,6 +37,7 @@ data class LibraryResponse(
                 homepageUrl = result.homepageUrl,
                 tel = result.tel,
                 openNow = result.openNow,
+                isBookmarked = result.isBookmarked,
                 todayOperatingHour = result.todayOperatingHour?.let(TodayOperatingHourResponse::from),
                 weeklyOperatingHours = result.weeklyOperatingHours.map(WeeklyOperatingHourResponse::from),
                 closedRules = result.closedRules.map(ClosedRuleResponse::from)

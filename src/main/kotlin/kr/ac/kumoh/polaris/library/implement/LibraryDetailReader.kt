@@ -44,6 +44,7 @@ class LibraryDetailReader(
                 operatingHour = todayOperatingHour,
                 closedRules = closedRules
             ),
+            isBookmarked = false,
             todayOperatingHour = todayOperatingHour?.toTodayResult(),
             weeklyOperatingHours = weeklyOperatingHours.map { it.toWeeklyResult() },
             closedRules = closedRules.map { it.toClosedRuleResult() }

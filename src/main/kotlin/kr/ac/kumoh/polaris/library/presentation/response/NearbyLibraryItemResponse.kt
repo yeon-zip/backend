@@ -21,7 +21,9 @@ data class NearbyLibraryItemResponse(
     @Schema(description = "요청 위치에서 도서관까지 떨어진 거리입니다.", example = "2.38", nullable = false)
     val distanceKm: Double,
     @Schema(description = "도서관 운영 여부입니다.", example = "true", nullable = false)
-    val openNow: Boolean
+    val openNow: Boolean,
+    @Schema(description = "현재 인증 사용자의 찜 여부입니다.", example = "false", nullable = false)
+    val isBookmarked: Boolean
 ) {
     companion object {
         fun from(result: NearbyLibraryItemResult): NearbyLibraryItemResponse =
@@ -34,7 +36,8 @@ data class NearbyLibraryItemResponse(
                 homepageUrl = result.homepageUrl,
                 tel = result.tel,
                 distanceKm = result.distanceKm,
-                openNow = result.openNow
+                openNow = result.openNow,
+                isBookmarked = result.isBookmarked
             )
     }
 }

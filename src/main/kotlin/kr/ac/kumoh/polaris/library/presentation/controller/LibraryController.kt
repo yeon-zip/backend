@@ -6,11 +6,13 @@ import io.swagger.v3.oas.annotations.Parameters
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import kr.ac.kumoh.polaris.auth.principal.AuthenticatedUser
 import kr.ac.kumoh.polaris.global.dto.CursorPageResponse
 import kr.ac.kumoh.polaris.library.presentation.response.LibraryResponse
 import kr.ac.kumoh.polaris.library.presentation.response.NearbyLibraryItemResponse
 import kr.ac.kumoh.polaris.library.service.LibraryInfoService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -51,14 +53,16 @@ class LibraryController(
         @RequestParam longitude: Double,
         @RequestParam(defaultValue = "5.0") radiusKm: Double,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(defaultValue = "10") limit: Int
+        @RequestParam(defaultValue = "10") limit: Int,
+        @AuthenticationPrincipal authenticatedUser: AuthenticatedUser?
     ): ResponseEntity<CursorPageResponse<NearbyLibraryItemResponse>> {
         val result = libraryInfoService.getNearbyLibraries(
             latitude = latitude,
             longitude = longitude,
             radiusKm = radiusKm,
             cursor = cursor,
-            limit = limit
+            limit = limit,
+            userId = authenticatedUser?.id
         )
 
         return ResponseEntity.ok(
@@ -79,9 +83,13 @@ class LibraryController(
     )
     @GetMapping("/{libraryId}")
     fun getLibrary(
-        @PathVariable libraryId: Long
+        @PathVariable libraryId: Long,
+        @AuthenticationPrincipal authenticatedUser: AuthenticatedUser?
     ): ResponseEntity<LibraryResponse> {
-        val result = libraryInfoService.getLibraryDetail(libraryId)
+        val result = libraryInfoService.getLibraryDetail(
+            libraryId = libraryId,
+            userId = authenticatedUser?.id
+        )
 
         return ResponseEntity.ok(LibraryResponse.from(result))
     }

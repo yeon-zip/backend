@@ -9,6 +9,7 @@ data class LibraryDetailResult(
     val homepageUrl: String?,
     val tel: String?,
     val openNow: Boolean,
+    val isBookmarked: Boolean,
     val todayOperatingHour: TodayOperatingHourResult?,
     val weeklyOperatingHours: List<WeeklyOperatingHourResult>,
     val closedRules: List<ClosedRuleResult>
