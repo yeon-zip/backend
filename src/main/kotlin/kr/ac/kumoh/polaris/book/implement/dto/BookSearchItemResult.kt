@@ -14,7 +14,8 @@ data class BookSearchItemResult(
     val description: String?,
     val publicationDate: LocalDate?,
     val coverImageUrl: String?,
-    val link: String?
+    val link: String?,
+    val isBookmarked: Boolean
 ) {
     companion object {
         private val htmlTagRegex = Regex("<[^>]*>")
@@ -34,7 +35,8 @@ data class BookSearchItemResult(
                 description = sanitizeHtml(item.description),
                 publicationDate = parsePublicationDate(item.pubdate),
                 coverImageUrl = item.image?.trim()?.ifBlank { null },
-                link = item.link?.trim()?.ifBlank { null }
+                link = item.link?.trim()?.ifBlank { null },
+                isBookmarked = false
             )
         }
 

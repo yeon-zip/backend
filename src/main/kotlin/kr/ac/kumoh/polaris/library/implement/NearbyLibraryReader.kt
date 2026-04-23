@@ -73,7 +73,8 @@ class NearbyLibraryReader(
                     homepageUrl = nearbyLibrary.homepageUrl,
                     tel = nearbyLibrary.tel,
                     distanceKm = nearbyLibrary.distanceKm,
-                    openNow = openNowStatuses[nearbyLibrary.libraryId] ?: false
+                    openNow = openNowStatuses[nearbyLibrary.libraryId] ?: false,
+                    isBookmarked = false
                 )
             }
         )

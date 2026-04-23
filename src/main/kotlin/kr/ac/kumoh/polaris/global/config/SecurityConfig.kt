@@ -53,7 +53,11 @@ class SecurityConfig(
                 authorize("/oauth2/**", permitAll)
                 authorize("/login/oauth2/**", permitAll)
                 authorize("/api/v1/auth/logout", authenticated)
+                authorize("/api/v1/books/*/bookmark", authenticated)
+                authorize("/api/v1/libraries/*/bookmark", authenticated)
                 authorize("/api/v1/users/me", authenticated)
+                authorize("/api/v1/users/me/bookmarked-books", authenticated)
+                authorize("/api/v1/users/me/bookmarked-libraries", authenticated)
                 authorize("/admin/**", authenticated)
                 authorize("/**", permitAll)
             }

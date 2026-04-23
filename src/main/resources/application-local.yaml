@@ -26,7 +26,7 @@ springdoc:
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
-    enabled: false
+    enabled: true
     operations-sorter: alpha
     display-request-duration: true
     tags-sorter: alpha

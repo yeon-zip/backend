@@ -9,5 +9,6 @@ data class NearbyLibraryItemResult(
     val homepageUrl: String?,
     val tel: String?,
     val distanceKm: Double,
-    val openNow: Boolean
+    val openNow: Boolean,
+    val isBookmarked: Boolean
 )
