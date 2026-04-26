@@ -5,6 +5,7 @@ import kr.ac.kumoh.polaris.book.implement.BookReader
 import kr.ac.kumoh.polaris.book.implement.BookWriter
 import kr.ac.kumoh.polaris.book.implement.dto.BookResult
 import kr.ac.kumoh.polaris.bookmark.implement.BookmarkStatusReader
+import kr.ac.kumoh.polaris.bookvote.implement.BookVoteSummaryReader
 import kr.ac.kumoh.polaris.global.exception.ErrorCode
 import kr.ac.kumoh.polaris.global.exception.ServiceException
 import kr.ac.kumoh.polaris.global.util.IsbnNormalizer
@@ -15,7 +16,8 @@ class BookService(
     private val bookReader: BookReader,
     private val bookMetadataLoader: BookMetadataLoader,
     private val bookWriter: BookWriter,
-    private val bookmarkStatusReader: BookmarkStatusReader
+    private val bookmarkStatusReader: BookmarkStatusReader,
+    private val bookVoteSummaryReader: BookVoteSummaryReader
 ) {
     fun getBook(
         isbn: String,
@@ -30,6 +32,7 @@ class BookService(
                 errorCode = ErrorCode.BOOK_NOT_FOUND,
                 message = "도서를 찾을 수 없습니다. isbn=$normalizedIsbn"
             )
+        val voteSummary = bookVoteSummaryReader.getBookVoteSummary(userId, book.isbn ?: normalizedIsbn)
 
         return BookResult(
             isbn = book.isbn ?: normalizedIsbn,
@@ -39,7 +42,10 @@ class BookService(
             description = book.description,
             publicationDate = book.publicationDate,
             coverImageUrl = book.coverImageUrl,
-            isBookmarked = bookmarkStatusReader.isBookBookmarked(userId, book.id)
+            isBookmarked = bookmarkStatusReader.isBookBookmarked(userId, book.id),
+            recommendCount = voteSummary.recommendCount,
+            notRecommendCount = voteSummary.notRecommendCount,
+            myVote = voteSummary.myVote
         )
     }
 }

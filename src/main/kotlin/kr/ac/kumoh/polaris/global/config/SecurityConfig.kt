@@ -54,6 +54,7 @@ class SecurityConfig(
                 authorize("/login/oauth2/**", permitAll)
                 authorize("/api/v1/auth/logout", authenticated)
                 authorize("/api/v1/books/*/bookmark", authenticated)
+                authorize("/api/v1/books/*/vote", authenticated)
                 authorize("/api/v1/libraries/*/bookmark", authenticated)
                 authorize("/api/v1/users/me", authenticated)
                 authorize("/api/v1/users/me/bookmarked-books", authenticated)

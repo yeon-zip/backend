@@ -61,7 +61,7 @@ class AuthController(
         <p>Kakao 로그인 후 발급된 코드로 로그인할 수 있는 액세스 토큰 및 리프레시 토큰을 발급합니다.</p>
         <p>액세스 토큰은 메모리에 저장 후 Authorization 헤더에 담아 전송해야 합니다.</p>
         <p>리프레시 토큰은 쿠키나 Keychain, Keystore에 저장하고 <code>/api/v1/auth/refresh</code>로 요청할 때만 전송하도록 해야 합니다.</p>
-        <p>액세스 토큰은 10분(3600초), 리프레시 토큰은 1년(31536000초) 간 유효합니다.</p>
+        <p>액세스 토큰은 10분(600초), 리프레시 토큰은 1년(31536000초) 간 유효합니다.</p>
     """)
     @PostMapping("/exchange")
     fun exchange(
