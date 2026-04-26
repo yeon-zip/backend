@@ -109,7 +109,7 @@ core:
     oidc:
       app:
         targets:
-          mobile: ${OIDC_APP_TARGET_MOBILE:polaris://auth/callback}
+          polaris: ${OIDC_APP_TARGET_POLARIS:polaris://auth/callback}
         exchange:
           ttl: ${OIDC_APP_EXCHANGE_TTL:3m}
           allow-without-proof: ${OIDC_APP_EXCHANGE_ALLOW_WITHOUT_PROOF:false}
