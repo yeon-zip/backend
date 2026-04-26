@@ -2,6 +2,7 @@ package kr.ac.kumoh.polaris.book.presentation.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import kr.ac.kumoh.polaris.book.implement.dto.BookSearchItemResult
+import kr.ac.kumoh.polaris.bookvote.entity.BookVoteType
 import java.time.LocalDate
 
 data class BookSearchItemResponse(
@@ -20,7 +21,13 @@ data class BookSearchItemResponse(
     @Schema(description = "도서 표지 URL입니다.", example = "https://nl.go.kr/seoji/fu/ecip/dbfiles/CIP_FILES_TBL/2023/06/9791198363510.jpg", nullable = false)
     val coverImageUrl: String?,
     @Schema(description = "현재 인증 사용자의 찜 여부입니다.", example = "false", nullable = false)
-    val isBookmarked: Boolean
+    val isBookmarked: Boolean,
+    @Schema(description = "도서 추천 수입니다.", example = "10", nullable = false)
+    val recommendCount: Long,
+    @Schema(description = "도서 비추천 수입니다.", example = "2", nullable = false)
+    val notRecommendCount: Long,
+    @Schema(description = "현재 인증 사용자의 투표 값입니다.", example = "RECOMMEND", nullable = true)
+    val myVote: BookVoteType?
 ) {
     companion object {
         fun from(result: BookSearchItemResult): BookSearchItemResponse =
@@ -32,7 +39,10 @@ data class BookSearchItemResponse(
                 description = result.description,
                 publicationDate = result.publicationDate,
                 coverImageUrl = result.coverImageUrl,
-                isBookmarked = result.isBookmarked
+                isBookmarked = result.isBookmarked,
+                recommendCount = result.recommendCount,
+                notRecommendCount = result.notRecommendCount,
+                myVote = result.myVote
             )
     }
 }

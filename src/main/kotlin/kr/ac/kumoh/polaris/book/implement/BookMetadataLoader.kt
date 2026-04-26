@@ -1,6 +1,7 @@
 package kr.ac.kumoh.polaris.book.implement
 
 import kr.ac.kumoh.polaris.book.implement.client.NaverSearchBookDetailClient
+import kr.ac.kumoh.polaris.global.util.IsbnNormalizer
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -14,13 +15,15 @@ class BookMetadataLoader(
         private val PUBLICATION_DATE_REGEX = Regex("\\d{8}")
     }
 
-    fun loadByIsbn(isbn: String): BookMetadata? =
-        naverSearchBookDetailClient.searchBookDetails(isbn = isbn, display = 1)
+    fun loadByIsbn(isbn: String): BookMetadata? {
+        val normalizedRequestIsbn = IsbnNormalizer.normalize(isbn)
+
+        return naverSearchBookDetailClient.searchBookDetails(isbn = normalizedRequestIsbn, display = 1)
             .items
             .firstOrNull()
             ?.let { detail ->
                 val title = detail.title?.takeIf { it.isNotBlank() } ?: return null
-                val resolvedIsbn = detail.isbn?.takeIf { it.isNotBlank() } ?: isbn
+                val resolvedIsbn = IsbnNormalizer.extractIsbn13(detail.isbn) ?: normalizedRequestIsbn
 
                 BookMetadata(
                     isbn = resolvedIsbn,
@@ -32,6 +35,7 @@ class BookMetadataLoader(
                     coverImageUrl = detail.image?.takeIf { it.isNotBlank() }
                 )
             }
+    }
 
     private fun parsePublicationDate(raw: String?): LocalDate? {
         val value = raw?.trim()?.takeIf { it.matches(PUBLICATION_DATE_REGEX) } ?: return null

@@ -1,6 +1,7 @@
 package kr.ac.kumoh.polaris.book.implement.dto
 
 import kr.ac.kumoh.polaris.book.implement.client.dto.NaverBookSearchItem
+import kr.ac.kumoh.polaris.bookvote.entity.BookVoteType
 import kr.ac.kumoh.polaris.global.util.IsbnNormalizer
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -15,16 +16,17 @@ data class BookSearchItemResult(
     val publicationDate: LocalDate?,
     val coverImageUrl: String?,
     val link: String?,
-    val isBookmarked: Boolean
+    val isBookmarked: Boolean,
+    val recommendCount: Long = 0,
+    val notRecommendCount: Long = 0,
+    val myVote: BookVoteType? = null
 ) {
     companion object {
         private val htmlTagRegex = Regex("<[^>]*>")
         private val publicationDateRegex = Regex("\\d{8}")
-        private val whitespaceRegex = Regex("\\s+")
-        private val isbn13Regex = Regex("\\d{13}")
 
         fun from(item: NaverBookSearchItem): BookSearchItemResult? {
-            val isbn = extractIsbn13(item.isbn) ?: return null
+            val isbn = IsbnNormalizer.extractIsbn13(item.isbn) ?: return null
             val title = sanitizeHtml(item.title) ?: return null
 
             return BookSearchItemResult(
@@ -36,7 +38,10 @@ data class BookSearchItemResult(
                 publicationDate = parsePublicationDate(item.pubdate),
                 coverImageUrl = item.image?.trim()?.ifBlank { null },
                 link = item.link?.trim()?.ifBlank { null },
-                isBookmarked = false
+                isBookmarked = false,
+                recommendCount = 0,
+                notRecommendCount = 0,
+                myVote = null
             )
         }
 
@@ -65,21 +70,5 @@ data class BookSearchItemResult(
             }
         }
 
-        /**
-         * 네이버 책 검색 API의 ISBN 문자열에서 ISBN-13을 추출하고 정규화합니다.
-         *
-         * @param raw 원본 문자열
-         * @return 정규화된 ISBN-13입니다. 처리할 수 없으면 {@code null}을 반환합니다.
-         */
-        private fun extractIsbn13(raw: String?): String? {
-            val value = raw?.trim()?.takeIf { it.isNotBlank() } ?: return null
-
-            val candidate = value.split(whitespaceRegex)
-                .firstOrNull { it.matches(isbn13Regex) }
-                ?: isbn13Regex.find(value)?.value
-                ?: return null
-
-            return runCatching { IsbnNormalizer.normalize(candidate) }.getOrNull()
-        }
     }
 }
