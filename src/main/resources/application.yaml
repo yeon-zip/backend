@@ -116,7 +116,7 @@ core:
           ttl: ${OIDC_APP_EXCHANGE_TTL:3m}
           allow-without-proof: ${OIDC_APP_EXCHANGE_ALLOW_WITHOUT_PROOF:false}
       legacy-json-callback:
-        enabled: ${OIDC_LEGACY_JSON_CALLBACK_ENABLED:false}
+        enabled: ${OIDC_LEGACY_JSON_CALLBACK_ENABLED:true}
 
 ---
 
