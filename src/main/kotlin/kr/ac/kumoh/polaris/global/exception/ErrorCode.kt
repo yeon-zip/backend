@@ -18,16 +18,15 @@ enum class ErrorCode(
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "refresh token이 만료되었어요. 다시 로그인해 주세요."),
     OIDC_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Kakao OIDC 로그인에 실패했어요."),
     OIDC_INVALID_CHANNEL(HttpStatus.BAD_REQUEST, "지원하지 않는 로그인 채널이에요."),
-    OIDC_TARGET_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "허용되지 않은 앱 로그인 대상이에요."),
-    OIDC_PROOF_REQUIRED(HttpStatus.BAD_REQUEST, "앱 교환 코드에는 proof가 필요해요."),
+    OIDC_TARGET_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "허용되지 않은 로그인 대상이에요."),
+    OIDC_PROOF_REQUIRED(HttpStatus.BAD_REQUEST, "교환 코드에는 proof가 필요해요."),
     OIDC_UNSUPPORTED_CODE_CHALLENGE_METHOD(HttpStatus.BAD_REQUEST, "지원하지 않는 code challenge method예요."),
     OIDC_INVALID_CODE_CHALLENGE(HttpStatus.BAD_REQUEST, "유효하지 않은 code challenge예요."),
     OIDC_INVALID_CODE_VERIFIER(HttpStatus.BAD_REQUEST, "유효하지 않은 code verifier예요."),
-    OIDC_PROOF_MISMATCH(HttpStatus.UNAUTHORIZED, "앱 proof 검증에 실패했어요."),
+    OIDC_PROOF_MISMATCH(HttpStatus.UNAUTHORIZED, "proof 검증에 실패했어요."),
     OIDC_EXCHANGE_CODE_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 교환 코드예요."),
     OIDC_EXCHANGE_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "만료된 교환 코드예요."),
     OIDC_EXCHANGE_CODE_ALREADY_CONSUMED(HttpStatus.CONFLICT, "이미 사용된 교환 코드예요."),
     OIDC_EXCHANGE_TARGET_MISMATCH(HttpStatus.UNAUTHORIZED, "교환 코드의 targetId가 일치하지 않아요."),
-    OIDC_TERMINAL_ISSUANCE_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "교환 코드 발급을 완료할 수 없어요. 다시 로그인해 주세요."),
-    OIDC_NON_APP_CALLBACK_DISABLED(HttpStatus.FORBIDDEN, "비앱 OIDC 콜백은 비활성화되어 있어요.")
+    OIDC_TERMINAL_ISSUANCE_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "교환 코드 발급을 완료할 수 없어요. 다시 로그인해 주세요.")
 }

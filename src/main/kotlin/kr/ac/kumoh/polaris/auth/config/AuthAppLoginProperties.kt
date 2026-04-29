@@ -5,8 +5,7 @@ import java.time.Duration
 
 @ConfigurationProperties(prefix = "core.auth.oidc")
 data class AuthAppLoginProperties(
-    val app: App = App(),
-    val legacyJsonCallback: LegacyJsonCallback = LegacyJsonCallback()
+    val app: App = App()
 ) {
     fun resolveTarget(targetId: String): String? = app.targets[targetId]
 
@@ -18,9 +17,5 @@ data class AuthAppLoginProperties(
     data class Exchange(
         val ttl: Duration = Duration.ofMinutes(3),
         val allowWithoutProof: Boolean = false
-    )
-
-    data class LegacyJsonCallback(
-        val enabled: Boolean = false
     )
 }

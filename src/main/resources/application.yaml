@@ -110,13 +110,11 @@ core:
       app:
         targets:
           polaris: ${OIDC_APP_TARGET_POLARIS:polaris://auth/callback}
-          web: ${OIDC_WEB_TARGET:http://localhost:3000/login}
-          web-dev: ${OIDC_WEB-DEV_TARGET:http://localhost:3000/login}
+          web: ${OIDC_WEB_TARGET:http://localhost:3000/home}
+          web-dev: ${OIDC_WEB-DEV_TARGET:http://localhost:3000/home}
         exchange:
           ttl: ${OIDC_APP_EXCHANGE_TTL:3m}
           allow-without-proof: ${OIDC_APP_EXCHANGE_ALLOW_WITHOUT_PROOF:false}
-      legacy-json-callback:
-        enabled: ${OIDC_LEGACY_JSON_CALLBACK_ENABLED:true}
 
 ---
 

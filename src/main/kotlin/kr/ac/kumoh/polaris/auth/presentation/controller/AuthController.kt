@@ -39,11 +39,11 @@ class AuthController(
         response: HttpServletResponse,
         @Parameter(description = "모바일 앱 환경에서는 `app`을, 웹 환경에서는 `web`을 사용하세요. 기본 값은 `web`입니다.")
         @RequestParam(required = false) channel: String?,
-        @Parameter(description = "모바일 앱 환경일 때 앱으로 되돌아가기 위한 앱의 Scheme을 입력해야 합니다.")
+        @Parameter(description = "로그인 성공 후 교환 코드를 돌려보낼 허용된 대상 ID입니다. 웹에서는 생략 시 `web`이 사용됩니다.")
         @RequestParam(required = false) target: String?,
-        @Parameter(description = "[PKCE] 애플리케이션에서 생성한 임의의 문자열 `code_verifier`를 특정 함수로 변환한 값을 입력하세요.")
+        @Parameter(description = "[PKCE] 애플리케이션에서 생성한 임의의 문자열 `code_verifier`를 특정 함수로 변환한 값을 입력하세요. 웹과 앱 모두 필수입니다.")
         @RequestParam(required = false) codeChallenge: String?,
-        @Parameter(description = "[PKCE] `code_verifier` 변환에 사용되는 함수를 입력하세요. `S256`을 사용해야 합니다.")
+        @Parameter(description = "[PKCE] `code_verifier` 변환에 사용되는 함수를 입력하세요. 웹과 앱 모두 `S256`을 사용해야 합니다.")
         @RequestParam(required = false) codeChallengeMethod: String?,
         request: jakarta.servlet.http.HttpServletRequest
     ) {
