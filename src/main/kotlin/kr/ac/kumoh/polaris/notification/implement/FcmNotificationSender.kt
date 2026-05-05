@@ -1,11 +1,7 @@
 package kr.ac.kumoh.polaris.notification.implement
 
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
-import org.springframework.stereotype.Component
 
-@Component
-@ConditionalOnBean(FcmMulticastClient::class)
 class FcmNotificationSender(
     private val fcmMulticastClient: FcmMulticastClient
 ) : NotificationSender {

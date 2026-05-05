@@ -4,13 +4,15 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.messaging.FirebaseMessaging
+import kr.ac.kumoh.polaris.notification.implement.FcmMulticastClient
+import kr.ac.kumoh.polaris.notification.implement.FirebaseMessagingMulticastClient
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.io.FileInputStream
 
 @Configuration
-@ConditionalOnProperty(prefix = "notification.fcm", name = ["enabled"], havingValue = "true")
+@ConditionalOnProperty(prefix = "core.notification.fcm", name = ["enabled"], havingValue = "true")
 class FirebaseAdminConfig(
     private val notificationProperties: NotificationProperties
 ) {
@@ -29,6 +31,10 @@ class FirebaseAdminConfig(
     @Bean
     fun firebaseMessaging(firebaseApp: FirebaseApp): FirebaseMessaging =
         FirebaseMessaging.getInstance(firebaseApp)
+
+    @Bean
+    fun fcmMulticastClient(firebaseMessaging: FirebaseMessaging): FcmMulticastClient =
+        FirebaseMessagingMulticastClient(firebaseMessaging)
 
     private fun loadCredentials(properties: NotificationProperties.Fcm): GoogleCredentials {
         val serviceAccountFile = properties.serviceAccountFile?.takeIf { it.isNotBlank() }
