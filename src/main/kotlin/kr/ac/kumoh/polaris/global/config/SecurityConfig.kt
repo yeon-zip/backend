@@ -59,6 +59,7 @@ class SecurityConfig(
                 authorize("/api/v1/users/me", authenticated)
                 authorize("/api/v1/users/me/bookmarked-books", authenticated)
                 authorize("/api/v1/users/me/bookmarked-libraries", authenticated)
+                authorize("/api/v1/notifications/**", authenticated)
                 authorize("/admin/**", authenticated)
                 authorize("/**", permitAll)
             }
