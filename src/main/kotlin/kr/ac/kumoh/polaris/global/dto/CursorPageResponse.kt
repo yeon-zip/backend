@@ -1,5 +1,7 @@
 package kr.ac.kumoh.polaris.global.dto
 
+import io.swagger.v3.oas.annotations.media.Schema
+
 /**
  * 커서 기반 페이지네이션 응답 DTO
  *
@@ -11,8 +13,17 @@ package kr.ac.kumoh.polaris.global.dto
  * @property items 현재 페이지의 데이터 목록
  */
 data class CursorPageResponse<T>(
+    @field:Schema(description = "다음 페이지가 있으면 true입니다.", example = "true", nullable = false)
     val hasNext: Boolean,
+
+    @field:Schema(
+        description = "다음 페이지 조회에 사용할 커서입니다. 다음 페이지가 없으면 null입니다.",
+        example = "98",
+        nullable = true
+    )
     val nextCursor: String?,
+
+    @field:Schema(description = "현재 페이지의 항목 목록입니다.", nullable = false)
     val items: List<T>
 ) {
     companion object {
