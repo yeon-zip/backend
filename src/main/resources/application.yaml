@@ -115,6 +115,12 @@ core:
         exchange:
           ttl: ${OIDC_APP_EXCHANGE_TTL:3m}
           allow-without-proof: ${OIDC_APP_EXCHANGE_ALLOW_WITHOUT_PROOF:false}
+  notification:
+    dispatch:
+      enabled: ${NOTIFICATION_DISPATCH_ENABLED:false}
+      cron: ${NOTIFICATION_DISPATCH_CRON:0 0 9 * * *}
+      zone: ${NOTIFICATION_DISPATCH_ZONE:Asia/Seoul}
+      batch-size: ${NOTIFICATION_DISPATCH_BATCH_SIZE:100}
 
 ---
 
