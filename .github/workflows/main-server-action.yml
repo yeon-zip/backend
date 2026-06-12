@@ -1,7 +1,8 @@
 name: main-server-action
 on:
+  push:
+    branches: [ "feature/rocky-deploy" ]  # 👈 내 브랜치에 푸시될 때만 자동으로 1번 실행해라!
   workflow_dispatch:
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
