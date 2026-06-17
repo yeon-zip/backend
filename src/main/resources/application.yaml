@@ -83,7 +83,7 @@ core:
     max-age: 3600
   openapi:
     data4library:
-      base-url: "http://data4library.kr"
+      base-url: "https://data4library.kr"
       auth-key: ${DATA4LIBRARY_AUTH_KEY:data4library-auth-key}
       book-exist-concurrency: 4
       book-exist-cache-duration: 30m
